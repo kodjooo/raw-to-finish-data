@@ -1,0 +1,61 @@
+АРХИТЕКТУРНОЕ ОПИСАНИЕ СЕРВИСА RAW-TO-FINISHED-DATA
+
+1. Общий обзор
+   - Приложение представляет собой контейнеризованный Python-сервис, запускаемый ТОЛЬКО внутри Docker Desktop (см. Dockerfile). Вне контейнера код не исполняем.
+   - Основные компоненты:
+     • CLI (`app/cli.py`) — единая точка входа с командами `run` и `validate-config`; используется в `app/main.py`.
+     • Orchestrator (`app/orchestrator/service.py`) запускает цикл: читает батч, вызывает LLM, применяет mapping, записывает в приёмник и обновляет статусы источника.
+     • Source Adapter (`app/adapters/source_adapter.py`) — читает строки со статусом status_new через `GoogleSheetsClient` и `WorksheetAccessor`, нормализует их в DTO `SourceRow`, сразу помечая пустые product_content / product_id_hash ошибками.
+     • LLM Client (`app/services/llm_client.py`) — интеграция с OpenAI Assistants API (официальный Python SDK + tenacity), формирует промпт из `product_content` + `category`, явно перечисляя требуемые ключи ответа (section_path/section_name/section_code, description_html, volume, abv, prices.retail и др.) и правила валидного JSON (экранирование кавычек, отсутствие сырых переносов), повторяет запросы согласно `llm_max_retries`, сохраняет сырое тело ответа.
+     • Mapping Engine (`app/core/mapping_engine.py`) — слой трансформации, который, опираясь на mapping.yaml, собирает патч target_column → value, применяет трансформации (strip/join/number/comma_to_dot/dot_to_comma/to_string/append_percent/strip_percent/normalize_slash_path) и уважает write_if_empty; правило для IP_PROP1006 (галерея) специально исключено, чтобы поле всегда оставалось пустым, IE_DETAIL_TEXT_TYPE всегда проставляется константой "text", колонки складских остатков (`ICAT_STORE*_AMOUNT`) удалены из патча, а новые правила mapping учитывают резервные поля агента (`description`, `category_path`, `volume_l`, `alcohol_percent`, `appellation`, `aging`, `technical_features`, `terroir` и др.), конвертируют значения объёма/крепости в формат `0,75` (без `%`) / `13,5%`, заполняют только `IE_SECTION_PATH` без разложения строки «Вино / Красное» и напрямую переносят поля источника `name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)` в соответствующие ячейки приёмника.
+     • Sink Adapter (`app/adapters/sink_adapter.py`) — клиент Google Sheet B (битриксовый формат) с режимами append/upsert_by_xml_id, обновляет только изменённые колонки и гарантированно прокидывает image_path.
+     • Config Layer (`app/config/models.py`, `app/config/loader.py`) — валидирует .env/.env.example, config.yaml и mapping-файл, предоставляет типизированные объекты остальным модулям.
+     • Observability — логирование (structured logs), учёт статусов/метрик и сохранение ошибок в note.
+
+2. Поток данных
+   1) Orchestrator запрашивает батч в Source Adapter с учётом лимитов (config.batch_size).
+   2) Для каждой валидной строки формируется payload в LLM Client (product_content, category, при необходимости product_url/source_site); перед вызовом действует `RateLimiter` (max_rps/max_rpm из runtime).
+   3) LLM Client выполняет запрос с ретраями и возвращает объект, валидированный pydantic-моделью; при ошибках возвращается техническое исключение.
+   4) Mapping Engine инициализируется правилом из mapping-файла: извлекает значения (json/source_row/const), применяет трансформации, строит патч target_column → value, соблюдая правило «не пишем пустые значения».
+   5) Sink Adapter пишет патч в Google Sheet B:
+        - append — вставка новой строки, остальные поля пустые;
+        - upsert_by_xml_id — поиск по IE_XML_ID = product_id_hash и обновление только перечисленных колонок.
+      image_path всегда прокидывается напрямую (без скачивания/перезаписи).
+   6) По результату Sink Adapter возвращает статус записи; Orchestrator обновляет строку источника (status_done/status_error, processed_at, note) через Source Adapter.
+
+3. Конфигурация и секреты
+   - `.env` / `.env.example`: лежат в корне, содержат полный список переменных (см. ниже) и комментарии, где брать доступы. Эти файлы читает Docker/`pydantic-settings`.
+     • `GOOGLE_SERVICE_ACCOUNT_JSON_PATH`, `GOOGLE_DELEGATED_USER`.
+     • `SOURCE_*`, `SINK_*` — параметры листов и колонок.
+     • `LLM_*` (включая `LLM_ASSISTANT_ID`) — настройки OpenAI Assistants; `LLM_API_KEY` = ключ OpenAI, `LLM_MODEL` заполняется только если ассистент не используется.
+     • `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM`.
+     • `CONFIG_PATH`, `MAPPING_PATH` — позволяют переопределять путь к yaml-конфига и mapping-файлу.
+   - `config/config.yaml`: используется по умолчанию (можно подменить через `CONFIG_PATH`). Внутри храним структурированный словарь `runtime`, `google_auth`, `source_sheet`, `sink_sheet`, `llm`, `mapping`. Значения допускают плейсхолдеры `${ENV_NAME}` — загрузчик заменит их фактическими значениями из окружения.
+   - `config/mapping.yaml`: основной mapping, который расписывает правила вида {name, source, (json_path|source_column|const_value), target_column, transform[], write_if_empty}. В текущем эталоне перечислены ключевые поля Bitrix (IE_NAME, IP_PROP**** и т.д.) и обязательно IE_XML_ID/image_path.
+   - Доступ к JSON сервисного аккаунта обеспечивается через хостовую папку `./secrets`, смонтированную в контейнер `processor` (read-only) по умолчанию; внутри ожидается файл `google-service-account.json`, путь указан в `.env`.
+
+4. Технологический стек
+   - Язык: Python 3.12 (см. Dockerfile). Все зависимости закрепим в `requirements.txt` (pydantic, pydantic-settings, httpx, gspread, google-auth, typer, structlog, tenacity, PyYAML, pytest и т.д.).
+   - Клиент Google Sheets: `gspread` + `google-auth` (сервисный аккаунт). Планируется единый клиент, от которого наследуются source/sink адаптеры.
+   - HTTP/LLM: `httpx` (sync) с ретраями (tenacity) и валидациями через `pydantic`.
+   - CLI: `typer` (команды run, dry-run, validate-config).
+   - Тесты: `pytest`, `pytest-mock`, `respx`/`responses` для моков HTTP, фикстуры mapping/config в `tests/fixtures`.
+   - Контейнеризация: Docker Desktop, одиночный сервис `processor` в `docker-compose.yml`; запуск `docker compose up processor` или `docker run --env-file .env raw-to-finished-data`.
+
+5. Логирование и мониторинг
+   - Все модули пишут структурированные логи (JSON или key=value) в stdout, Docker Desktop собирает их.
+   - Ключевые события: старт батча, количество успешных/ошибочных строк, ошибки LLM, ошибки записи в приёмник.
+   - Для отладки сохраняем llm_raw (опционально) либо в отдельную колонку источника, либо в metadata под ключом `llm_raw`.
+
+6. Обработка ошибок и идемпотентность
+   - Если `product_content` пустой, строка сразу помечается статусом error с note.
+   - При сетевых ошибках работаем с экспоненциальным backoff и лимитом попыток; при превышении лимита строка получает статус error.
+   - Режим upsert_by_xml_id обеспечивает идемпотентность за счёт уникального product_id_hash (маппится на IE_XML_ID). Повторный запуск не перезаписывает поля, которых нет в патче.
+
+7. Тестирование
+   - `tests/unit` — конфиг-лоадеры, mapping engine, трансформации, генерация патчей.
+   - `tests/integration` — мок Google Sheets/LLM для проверки полных сценариев (append и upsert).
+   - Для тестов используем локальные фикстуры mapping/config и временные JSON-файлы; запускать через `docker run --rm <image> pytest`.
+
+8. Связь с планом
+   - Соответствие этапам в docs/plan.md: пункты 2–7 реализуют описанные здесь компоненты. Любые изменения архитектуры отражаем и здесь, и в планах, прежде чем помечать этап «выполнено».

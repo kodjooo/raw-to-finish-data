@@ -1,0 +1,12 @@
+services:
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: raw-to-finished-data
+    env_file:
+      - .env
+    volumes:
+      - ./secrets:/app/secrets:ro
+    command: ["python", "-m", "app.main", "run"]
+    restart: unless-stopped

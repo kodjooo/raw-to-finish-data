@@ -1,0 +1,7 @@
+.DS_Store
+.cursor/
+.pytest_cache/
+__pycache__/
+.env
+secrets/
+*.pyc

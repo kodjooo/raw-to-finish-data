@@ -1,0 +1,229 @@
+- name: product-key
+  source: source_row
+  source_column: product_id_hash
+  target_column: Внешний код {IE_XML_ID}
+  required: true
+
+- name: image-main
+  source: source_row
+  source_column: image_path
+  target_column: Детальная картинка (путь) {IE_DETAIL_PICTURE}
+
+- name: name
+  source: json
+  json_path: $.name
+  target_column: Наименование элемента {IE_NAME}
+  transform:
+    - strip
+
+- name: name-rival-en
+  source: source_row
+  source_column: name (en)
+  target_column: Наименование у конкурента (en) {IE_NAME_RIVAL_EN}
+  transform:
+    - strip
+
+- name: name-rival-ru
+  source: source_row
+  source_column: name (ru)
+  target_column: Наименование у конкурента (ru) {IE_NAME_RIVAL_RU}
+  transform:
+    - strip
+
+- name: detail-text-plain
+  source: json
+  json_path: $.description
+  target_column: Детальное описание {IE_DETAIL_TEXT}
+  write_if_empty: false
+
+- name: detail-text
+  source: json
+  json_path: $.description_html
+  target_column: Детальное описание {IE_DETAIL_TEXT}
+  write_if_empty: false
+
+- name: detail-text-type
+  source: const
+  const_value: text
+  target_column: Тип детального описания {IE_DETAIL_TEXT_TYPE}
+
+- name: section-path
+  source: json
+  json_path: $.section_path
+  target_column: Путь из названий разделов {IE_SECTION_PATH}
+  transform:
+    - normalize_slash_path
+
+- name: brand
+  source: json
+  json_path: $.brand
+  target_column: Бренд [BREND] {IP_PROP1012}
+  transform:
+    - strip
+
+- name: country
+  source: json
+  json_path: $.country
+  target_column: Страна [STRANA] {IP_PROP1051}
+
+- name: region
+  source: json
+  json_path: $.region
+  target_column: Регион [REGION] {IP_PROP1042}
+
+- name: appellation
+  source: json
+  json_path: $.appellation
+  target_column: Аппелласьон [APPELLASON] {IP_PROP1010}
+
+- name: manufacturer
+  source: json
+  json_path: $.manufacturer
+  target_column: Производитель [CML2_MANUFACTURER] {IP_PROP1008}
+  transform:
+    - strip
+
+- name: grapes
+  source: json
+  json_path: $.grape_varieties
+  target_column: Виноград [VINOGRAD] {IP_PROP1013}
+  transform:
+    - join(', ')
+
+- name: sugar
+  source: json
+  json_path: $.sugar
+  target_column: Содержание сахара [SODERZHANIE_SAKHARA] {IP_PROP1045}
+
+- name: sugar-content
+  source: json
+  json_path: $.sugar_content
+  target_column: Содержание сахара [SODERZHANIE_SAKHARA] {IP_PROP1045}
+
+- name: volume
+  source: json
+  json_path: $.volume
+  target_column: Объем [OBEM] {IP_PROP1035}
+  transform:
+    - comma_to_dot
+    - to_string
+    - dot_to_comma
+
+- name: volume-liters
+  source: json
+  json_path: $.volume_l
+  target_column: Объем [OBEM] {IP_PROP1035}
+  transform:
+    - comma_to_dot
+    - to_string
+    - dot_to_comma
+
+- name: abv
+  source: json
+  json_path: $.abv
+  target_column: Крепость [KREPOST] {IP_PROP1120}
+  transform:
+    - strip_percent
+    - comma_to_dot
+    - to_string
+    - dot_to_comma
+    - append_percent
+
+- name: abv-percent
+  source: json
+  json_path: $.alcohol_percent
+  target_column: Крепость [KREPOST] {IP_PROP1120}
+  transform:
+    - strip_percent
+    - comma_to_dot
+    - to_string
+    - dot_to_comma
+    - append_percent
+
+- name: vintage
+  source: json
+  json_path: $.vintage
+  target_column: Винтаж [VINTAZH] {IP_PROP1061}
+
+- name: vintage-year
+  source: json
+  json_path: $.vintage_year
+  target_column: Винтаж [VINTAZH] {IP_PROP1061}
+
+- name: color
+  source: json
+  json_path: $.color
+  target_column: Цвет [TSVET] {IP_PROP1059}
+  transform:
+    - strip
+
+- name: acidity
+  source: json
+  json_path: $.acidity
+  target_column: Кислотность [KISLOTNOST] {IP_PROP1066}
+
+- name: aroma
+  source: json
+  json_path: $.aroma
+  target_column: Аромат [AROMAT] {IP_PROP1011}
+
+- name: taste
+  source: json
+  json_path: $.taste
+  target_column: Вкус [VKUS] {IP_PROP1014}
+
+- name: classification
+  source: json
+  json_path: $.classification
+  target_column: Классификация [KLASSIFIKATSIYA] {IP_PROP1029}
+
+- name: body
+  source: json
+  json_path: $.body
+  target_column: Тело / Насыщенность [TELO_NASYSHCHENNOST] {IP_PROP1076}
+
+- name: temperature-serving
+  source: json
+  json_path: $.temperature_serving
+  target_column: Температура подачи [TEMPERATURA_PODACHI] {IP_PROP1077}
+
+- name: serving-temperature
+  source: json
+  json_path: $.serving_temperature
+  target_column: Температура подачи [TEMPERATURA_PODACHI] {IP_PROP1077}
+
+- name: technical-features
+  source: json
+  json_path: $.technical_features
+  target_column: Технологические особенности [TEKHNOLOGICHESKIE_OSOBENNOSTI] {IP_PROP1079}
+
+- name: terroir
+  source: json
+  json_path: $.terroir
+  target_column: Терруар [TERRUAR] {IP_PROP1078}
+
+- name: aging
+  source: json
+  json_path: $.aging
+  target_column: Выдержка [VYDERZHKA] {IP_PROP1019}
+
+- name: production-method
+  source: json
+  json_path: $.production_method
+  target_column: Способ выдержки [SPOSOB_VYDERZHKI] {IP_PROP1073}
+
+- name: price-old
+  source: source_row
+  source_column: price (without discount)
+  target_column: Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT}
+  transform:
+    - comma_to_dot
+    - float
+
+- name: price-current
+  source: source_row
+  source_column: price (with discount)
+  target_column: Цена "Цена" {ICAT_PRICE5_PRICE}
+  transform:
+    - comma_to_dot
+    - float

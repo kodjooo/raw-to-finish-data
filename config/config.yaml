@@ -1,0 +1,41 @@
+version: 1
+runtime:
+  batch_size: ${BATCH_SIZE}
+  max_rps: ${MAX_RPS}
+  max_rpm: ${MAX_RPM}
+  llm_timeout_seconds: ${LLM_TIMEOUT_SECONDS}
+  llm_max_retries: ${LLM_MAX_RETRIES}
+
+google_auth:
+  service_account_json_path: ${GOOGLE_SERVICE_ACCOUNT_JSON_PATH}
+  delegated_user: ${GOOGLE_DELEGATED_USER}
+
+source_sheet:
+  spreadsheet_id: ${SOURCE_SPREADSHEET_ID}
+  worksheet_name: ${SOURCE_WORKSHEET_NAME}
+  status_column: ${SOURCE_STATUS_COLUMN}
+  status_new: "${SOURCE_STATUS_NEW}"
+  status_done: "${SOURCE_STATUS_DONE}"
+  status_error: "${SOURCE_STATUS_ERROR}"
+  note_column: ${SOURCE_NOTE_COLUMN}
+  content_column: ${SOURCE_CONTENT_COLUMN}
+  category_column: ${SOURCE_CATEGORY_COLUMN}
+  image_column: ${SOURCE_IMAGE_COLUMN}
+  id_column: ${SOURCE_ID_COLUMN}
+  processed_at_column: ${SOURCE_PROCESSED_AT_COLUMN}
+  llm_raw_column: ${SOURCE_LLM_RAW_COLUMN}
+
+sink_sheet:
+  spreadsheet_id: ${SINK_SPREADSHEET_ID}
+  worksheet_name: ${SINK_WORKSHEET_NAME}
+  mode: upsert_by_xml_id
+  key_column: "Внешний код {IE_XML_ID}"
+
+llm:
+  api_url: ${LLM_API_URL}
+  api_key: ${LLM_API_KEY}
+  model: ${LLM_MODEL}
+  assistant_id: ${LLM_ASSISTANT_ID}
+
+mapping:
+  path: ${MAPPING_PATH}
