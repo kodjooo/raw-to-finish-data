@@ -111,7 +111,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 name="section-code-category-slug",
                 source=MappingSource.JSON,
                 json_path="$.category_slug",
-                target_column="ISECT_XML_ID",
+                target_column="ISECT_CODE",
                 transform=["strip"],
             ),
         ]
@@ -141,7 +141,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["ABV"] == "13,5%"
     assert patch["IE_SECTION_PATH"] == "Вино/Красное"
     assert patch["ISECT_NAME"] == "Красное"
-    assert patch["ISECT_XML_ID"] == "krasnoe"
+    assert patch["ISECT_CODE"] == "krasnoe"
 
 
 def test_section_path_fallback_used_when_primary_missing() -> None:

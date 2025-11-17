@@ -236,7 +236,7 @@
 - name: section-code-category-slug
   source: json
   json_path: $.category_slug
-  target_column: Внешний код {ISECT_XML_ID}
+  target_column: Символьный код {ISECT_CODE}
   transform:
     - strip
 

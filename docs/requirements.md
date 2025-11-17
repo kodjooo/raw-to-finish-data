@@ -66,8 +66,8 @@ ID элемента {IE_ID}
 Тип детального описания {IE_DETAIL_TEXT_TYPE}
 Путь из названий разделов {IE_SECTION_PATH}
 Название раздела {ISECT_NAME} — заполняем значением `category` (fallback к section_path)
-Символьный код {ISECT_CODE} — не заполняем
-Внешний код {ISECT_XML_ID} — заполняем значением `category_slug`
+Символьный код {ISECT_CODE} — заполняем значением `category_slug`
+Внешний код {ISECT_XML_ID} — не заполняем
 Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT} — заполняем из колонки источника `price (without discount)`
 Цена "Цена" {ICAT_PRICE5_PRICE} — заполняем из колонки источника `price (with discount)`
 Цена "Цена Сайт Белгород" {ICAT_PRICE6_PRICE}
@@ -151,7 +151,7 @@ ID элемента {IE_ID}
 - `description` — fallback-текст, если по каким-то причинам не удалось отрендерить `description_html`. Мы всё равно заполним колонку IE_DETAIL_TEXT, но при наличии `description_html` он имеет приоритет.
 - `sugar_content`, `volume_l`, `alcohol_percent`, `vintage_year` — дубликаты основных свойств. Пайплайн автоматически заменяет запятую на точку для `volume_l` и убирает символ `%` у `alcohol_percent`, чтобы значения корректно ложились в Bitrix.
 - `manufacturer`, `color`, `temperature_serving` — кладём в соответствующие свойства (`IP_PROP1008`, `IP_PROP1059`, `IP_PROP1077`).
-- `category_path` — может дублировать `section_path`, но мы не разбиваем строку «Вино / Красное» по отдельным ячейкам (используем только колонку `Путь из названий разделов {IE_SECTION_PATH}`); `category` маппится в `ISECT_NAME`, `category_slug` — в `ISECT_XML_ID`.
+- `category_path` — может дублировать `section_path`, но мы не разбиваем строку «Вино / Красное» по отдельным ячейкам (используем только колонку `Путь из названий разделов {IE_SECTION_PATH}`); `category` маппится в `ISECT_NAME`, `category_slug` — в `ISECT_CODE`.
 - `grape_varieties_string` или случаи, когда `grape_varieties` приходит строкой — пайплайн автоматически разобьёт значение по запятым и превратит его в массив перед применением mapping.
 - `volume`/`volume_l` и `abv`/`alcohol_percent` при записи в Bitrix всегда конвертируются в строки с запятой в качестве десятичного разделителя; для крепости (`abv`) дополнительно добавляем знак `%` (пример: `0,75` и `13,5%`), независимо от того, в каком формате их вернул LLM.
 - Дополнительные свойства, которые агент может отправить в JSON и которые мы сохраняем напрямую в Bitrix: `appellation` (→ IP_PROP1010), `aging` (→ IP_PROP1019), `production_method` (→ IP_PROP1073), `acidity` (→ IP_PROP1066), `body` (→ IP_PROP1076), `technical_features` (→ IP_PROP1079), `terroir` (→ IP_PROP1078). Поле `serving_temperature` — синоним `temperature_serving`.
