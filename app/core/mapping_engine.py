@@ -22,6 +22,10 @@ class MappingEngine:
             value = self._apply_transforms(value, rule.transform)
             if self._is_empty(value) and not (rule.write_if_empty or rule.source is MappingSource.CONST):
                 continue
+            existing = patch.get(rule.target_column)
+            if existing is not None and not self._is_empty(existing) and not rule.write_if_empty:
+                # уже записали непустое значение — не перетираем fallback-правилами
+                continue
             patch[rule.target_column] = value
         return patch
 

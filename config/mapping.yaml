@@ -4,6 +4,13 @@
   target_column: Внешний код {IE_XML_ID}
   required: true
 
+- name: product-url
+  source: source_row
+  source_column: product_url
+  target_column: Ссылка у конкурента {IE_LINK_RIVAL}
+  transform:
+    - strip
+
 - name: image-main
   source: source_row
   source_column: image_path
@@ -53,6 +60,20 @@
   target_column: Путь из названий разделов {IE_SECTION_PATH}
   transform:
     - normalize_slash_path
+
+- name: section-path-category-path
+  source: json
+  json_path: $.category_path
+  target_column: Путь из названий разделов {IE_SECTION_PATH}
+  transform:
+    - normalize_slash_path
+
+- name: section-name-category
+  source: json
+  json_path: $.category
+  target_column: Название раздела {ISECT_NAME}
+  transform:
+    - strip
 
 - name: brand
   source: json
@@ -211,6 +232,13 @@
   source: json
   json_path: $.production_method
   target_column: Способ выдержки [SPOSOB_VYDERZHKI] {IP_PROP1073}
+
+- name: section-code-category-slug
+  source: json
+  json_path: $.category_slug
+  target_column: Внешний код {ISECT_XML_ID}
+  transform:
+    - strip
 
 - name: price-old
   source: source_row

@@ -55,6 +55,7 @@
 
 ID элемента {IE_ID}
 Внешний код {IE_XML_ID}
+Ссылка у конкурента {IE_LINK_RIVAL} — заполняем из `product_url`
 Наименование у конкурента (en) {IE_NAME_RIVAL_EN} — заполняем из колонки источника `name (en)`
 Наименование у конкурента (ru) {IE_NAME_RIVAL_RU} — заполняем из колонки источника `name (ru)`
 Наименование элемента {IE_NAME}
@@ -64,9 +65,9 @@ ID элемента {IE_ID}
 Детальное описание {IE_DETAIL_TEXT}
 Тип детального описания {IE_DETAIL_TEXT_TYPE}
 Путь из названий разделов {IE_SECTION_PATH}
-Название раздела {ISECT_NAME} — в текущей реализации не заполняем
+Название раздела {ISECT_NAME} — заполняем значением `category` (fallback к section_path)
 Символьный код {ISECT_CODE} — не заполняем
-Внешний код {ISECT_XML_ID}
+Внешний код {ISECT_XML_ID} — заполняем значением `category_slug`
 Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT} — заполняем из колонки источника `price (without discount)`
 Цена "Цена" {ICAT_PRICE5_PRICE} — заполняем из колонки источника `price (with discount)`
 Цена "Цена Сайт Белгород" {ICAT_PRICE6_PRICE}
@@ -138,7 +139,7 @@ ID элемента {IE_ID}
 - `grape_varieties` — массив строк (каждый сорт отдельным элементом).
 - `sugar`, `volume`, `abv`, `vintage`, `aroma`, `taste`, `classification`.
 - `description_html` — HTML с параграфами `<p>...</p>`.
-- `section_path` — строка вида `Категория/Подкатегория` без пробелов вокруг `/`.
+- `section_path` — строка вида `Категория/Подкатегория` без пробелов вокруг `/`. Если агент не прислал `section_path`, используем `category_path` как fallback (строка хранится целиком, без разбиения по другим колонкам).
 - `section_name` — последняя часть `section_path` (в текущей реализации приёмник больше не заполняется этим полем).
 - `section_code` — slug для `section_name` (в текущей реализации не заполняем, но агент всё равно может присылать значение).
 - `prices` → `retail` — число (или строка) с точкой в качестве разделителя дробной части.
@@ -150,11 +151,11 @@ ID элемента {IE_ID}
 - `description` — fallback-текст, если по каким-то причинам не удалось отрендерить `description_html`. Мы всё равно заполним колонку IE_DETAIL_TEXT, но при наличии `description_html` он имеет приоритет.
 - `sugar_content`, `volume_l`, `alcohol_percent`, `vintage_year` — дубликаты основных свойств. Пайплайн автоматически заменяет запятую на точку для `volume_l` и убирает символ `%` у `alcohol_percent`, чтобы значения корректно ложились в Bitrix.
 - `manufacturer`, `color`, `temperature_serving` — кладём в соответствующие свойства (`IP_PROP1008`, `IP_PROP1059`, `IP_PROP1077`).
-- `category_path` — может дублировать `section_path`, но мы не разбиваем строку «Вино / Красное» по отдельным ячейкам (используем только колонку `Путь из названий разделов {IE_SECTION_PATH}`; `ISECT_NAME` и `ISECT_CODE` сейчас не заполняем).
+- `category_path` — может дублировать `section_path`, но мы не разбиваем строку «Вино / Красное» по отдельным ячейкам (используем только колонку `Путь из названий разделов {IE_SECTION_PATH}`); `category` маппится в `ISECT_NAME`, `category_slug` — в `ISECT_XML_ID`.
 - `grape_varieties_string` или случаи, когда `grape_varieties` приходит строкой — пайплайн автоматически разобьёт значение по запятым и превратит его в массив перед применением mapping.
 - `volume`/`volume_l` и `abv`/`alcohol_percent` при записи в Bitrix всегда конвертируются в строки с запятой в качестве десятичного разделителя; для крепости (`abv`) дополнительно добавляем знак `%` (пример: `0,75` и `13,5%`), независимо от того, в каком формате их вернул LLM.
 - Дополнительные свойства, которые агент может отправить в JSON и которые мы сохраняем напрямую в Bitrix: `appellation` (→ IP_PROP1010), `aging` (→ IP_PROP1019), `production_method` (→ IP_PROP1073), `acidity` (→ IP_PROP1066), `body` (→ IP_PROP1076), `technical_features` (→ IP_PROP1079), `terroir` (→ IP_PROP1078). Поле `serving_temperature` — синоним `temperature_serving`.
-- Колонки источника (`name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)`) сразу перекладываются в соответствующие поля приёмника (IE_NAME_RIVAL_EN, IE_NAME_RIVAL_RU, ICAT_PRICE_WITHOUT_DISCOUNT, ICAT_PRICE5_PRICE) после нормализации значений (обрезаем пробелы, приводим цены к числу).
+- Колонки источника (`product_url`, `name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)`) сразу перекладываются в соответствующие поля приёмника (IE_LINK_RIVAL, IE_NAME_RIVAL_EN, IE_NAME_RIVAL_RU, ICAT_PRICE_WITHOUT_DISCOUNT, ICAT_PRICE5_PRICE) после нормализации значений (обрезаем пробелы, приводим цены к числу).
 
 {
   "name": "Шампанское Brut Rose",

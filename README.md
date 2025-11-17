@@ -1,6 +1,6 @@
 # raw-to-finished-data
 
-Контейнеризованный сервис обрабатывает сырые описания товаров из Google Sheet A, вызывает LLM по API, преобразует ответ с помощью mapping.yaml и записывает результат в битриксовую таблицу-приёмник (Google Sheet B). Единственный способ запуска — через Docker Desktop / docker compose.
+raw-to-finished-data — сервис автоматической постобработки карточек каталога. Он забирает строки из Google Sheet A (источник), отправляет `product_content` и `category` в LLM (Assistants API), валидирует ответ JSON, сопоставляет поля с битриксовым шаблоном по `config/mapping.yaml` и обновляет Google Sheet B. Проект изначально задуман как контейнеризированный (Docker Desktop локально, Docker Engine на сервере) и управляется через CLI `python -m app.main run`.
 
 ## Быстрый старт (Docker Desktop)
 
@@ -40,9 +40,24 @@
 docker compose run --rm processor pytest
 ```
 
-## Деплой на удалённый сервер
+## Деплой на удалённый сервер (через git)
 
-1. На сервере должны быть установлены Docker Engine и Docker Compose v2.
-2. Скопируйте репозиторий (или архив из CI) и `.env`/service-account JSON в нужные каталоги.
-3. Выполните `docker compose build processor && docker compose up -d processor`.
-4. Логи и метрики доступны через `docker compose logs -f processor`. Для обновления конфигураций перезапустите сервис (`docker compose up -d --force-recreate processor`).
+1. Убедитесь, что на сервере стоят Docker Engine + Docker Compose v2 и настроен доступ по SSH.
+2. Склонируйте репозиторий и перейдите в каталог:
+   ```bash
+   git clone git@github.com:kodjooo/raw-to-finish-data.git
+   cd raw-to-finish-data
+   ```
+3. Скопируйте `.env` (со всеми секретами) и JSON ключ сервисного аккаунта Google (например, `secrets/google-credentials.json`). Никогда не коммитьте эти файлы.
+4. Соберите контейнер и прогоните валидацию конфигов:
+   ```bash
+   docker compose pull   # если хотите использовать готовые образы, иначе build
+   docker compose build processor
+   docker compose run --rm processor python -m app.main validate-config
+   ```
+5. Запустите сервис в фоне:
+   ```bash
+   docker compose up -d processor
+   ```
+   Логи доступны через `docker compose logs -f processor`. Обновление до новой версии: `git pull`, затем `docker compose build processor && docker compose up -d --force-recreate processor`.
+6. Для ручного запуска одного батча используйте `docker compose run --rm processor python -m app.main run`.

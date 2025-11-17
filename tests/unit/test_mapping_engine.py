@@ -93,6 +93,27 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 target_column="IE_SECTION_PATH",
                 transform=["normalize_slash_path"],
             ),
+            MappingRule(
+                name="section-path-fallback",
+                source=MappingSource.JSON,
+                json_path="$.category_path",
+                target_column="IE_SECTION_PATH",
+                transform=["normalize_slash_path"],
+            ),
+            MappingRule(
+                name="section-name-category",
+                source=MappingSource.JSON,
+                json_path="$.category",
+                target_column="ISECT_NAME",
+                transform=["strip"],
+            ),
+            MappingRule(
+                name="section-code-category-slug",
+                source=MappingSource.JSON,
+                json_path="$.category_slug",
+                target_column="ISECT_XML_ID",
+                transform=["strip"],
+            ),
         ]
     )
     engine = MappingEngine(table)
@@ -102,6 +123,9 @@ def test_build_patch_applies_transforms_and_rules() -> None:
         "volume_l": "0,75",
         "alcohol_percent": "13.5%",
         "section_path": "Вино / Красное",
+        "category_path": "Вино / Десертное",
+        "category": "  Красное ",
+        "category_slug": "krasnoe",
     }
 
     patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
@@ -116,6 +140,35 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["VOLUME"] == "0,75"
     assert patch["ABV"] == "13,5%"
     assert patch["IE_SECTION_PATH"] == "Вино/Красное"
+    assert patch["ISECT_NAME"] == "Красное"
+    assert patch["ISECT_XML_ID"] == "krasnoe"
+
+
+def test_section_path_fallback_used_when_primary_missing() -> None:
+    table = MappingTable(
+        rules=[
+            MappingRule(
+                name="section-path",
+                source=MappingSource.JSON,
+                json_path="$.section_path",
+                target_column="IE_SECTION_PATH",
+                transform=["normalize_slash_path"],
+            ),
+            MappingRule(
+                name="section-path-fallback",
+                source=MappingSource.JSON,
+                json_path="$.category_path",
+                target_column="IE_SECTION_PATH",
+                transform=["normalize_slash_path"],
+            ),
+        ]
+    )
+    engine = MappingEngine(table)
+    llm_data = {"category_path": "Вино / Десертное"}
+
+    patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
+
+    assert patch["IE_SECTION_PATH"] == "Вино/Десертное"
 
 
 def test_empty_values_are_skipped_without_flag() -> None:
