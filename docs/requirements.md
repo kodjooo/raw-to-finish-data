@@ -155,7 +155,8 @@ ID элемента {IE_ID}
 - `grape_varieties_string` или случаи, когда `grape_varieties` приходит строкой — пайплайн автоматически разобьёт значение по запятым и превратит его в массив перед применением mapping.
 - `volume`/`volume_l` и `abv`/`alcohol_percent` при записи в Bitrix всегда конвертируются в строки с запятой в качестве десятичного разделителя; для крепости (`abv`) дополнительно добавляем знак `%` (пример: `0,75` и `13,5%`), независимо от того, в каком формате их вернул LLM.
 - Дополнительные свойства, которые агент может отправить в JSON и которые мы сохраняем напрямую в Bitrix: `appellation` (→ IP_PROP1010), `aging` (→ IP_PROP1019), `production_method` (→ IP_PROP1073), `acidity` (→ IP_PROP1066), `body` (→ IP_PROP1076), `technical_features` (→ IP_PROP1079), `terroir` (→ IP_PROP1078). Поле `serving_temperature` — синоним `temperature_serving`.
-- Колонки источника (`product_url`, `name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)`) сразу перекладываются в соответствующие поля приёмника (IE_LINK_RIVAL, IE_NAME_RIVAL_EN, IE_NAME_RIVAL_RU, ICAT_PRICE_WITHOUT_DISCOUNT, ICAT_PRICE5_PRICE) после нормализации значений (обрезаем пробелы, приводим цены к числу).
+- Колонки источника (`product_url`, `name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)`) сразу перекладываются в соответствующие поля приёмника (IE_LINK_RIVAL, IE_NAME_RIVAL_EN, IE_NAME_RIVAL_RU, ICAT_PRICE_WITHOUT_DISCOUNT, ICAT_PRICE5_PRICE) после нормализации значений (обрезаем пробелы, удаляем текст вроде `руб`, оставляем только цифры/знаки, приводим цены к числу).
+  Цены дополнительно форматируются в строку вида `2994.00` (две десятичные, разделитель — точка).
 
 {
   "name": "Шампанское Brut Rose",

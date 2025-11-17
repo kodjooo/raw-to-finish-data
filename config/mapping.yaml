@@ -245,13 +245,17 @@
   source_column: price (without discount)
   target_column: Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT}
   transform:
+    - extract_price
     - comma_to_dot
     - float
+    - format_price
 
 - name: price-current
   source: source_row
   source_column: price (with discount)
   target_column: Цена "Цена" {ICAT_PRICE5_PRICE}
   transform:
+    - extract_price
     - comma_to_dot
     - float
+    - format_price

@@ -16,8 +16,8 @@ def _source_row() -> SourceRow:
             "status": "Не обработано",
             "name (en)": "  Rival EN ",
             "name (ru)": "Риваль RU ",
-            "price (with discount)": "987,65",
-            "price (without discount)": "1 111,50",
+            "price (with discount)": "987,65 руб",
+            "price (without discount)": "1\xa0111,50 руб",
         },
     )
 
@@ -134,8 +134,8 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["IE_NAME"] == "Test Name"
     assert patch["IP_PROP1013"] == "Cabernet, Merlot"
     assert patch["IE_DETAIL_TEXT_TYPE"] == "text"
-    assert patch["ICAT_PRICE_WITHOUT_DISCOUNT"] == 1111.50
-    assert patch["ICAT_PRICE5_PRICE"] == 987.65
+    assert patch["ICAT_PRICE_WITHOUT_DISCOUNT"] == "1111.50"
+    assert patch["ICAT_PRICE5_PRICE"] == "987.65"
     assert patch["IE_NAME_RIVAL_EN"] == "Rival EN"
     assert patch["VOLUME"] == "0,75"
     assert patch["ABV"] == "13,5%"

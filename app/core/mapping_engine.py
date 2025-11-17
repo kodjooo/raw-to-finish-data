@@ -92,9 +92,16 @@ class MappingEngine:
                     result = int(float(result))
                 except (TypeError, ValueError):
                     return None
+            elif transform == "extract_price":
+                if result is None:
+                    continue
+                if not isinstance(result, str):
+                    result = str(result)
+                result = re.sub(r"[^0-9,.\-]", "", result)
             elif transform == "comma_to_dot":
                 if isinstance(result, str):
-                    result = result.replace(" ", "").replace(",", ".")
+                    # Удаляем любые пробелы/неразрывные пробелы перед заменой запятой на точку
+                    result = re.sub(r"\s+", "", result).replace(",", ".")
                 elif isinstance(result, (int, float)):
                     result = str(result)
             elif transform == "strip_percent":
@@ -103,6 +110,12 @@ class MappingEngine:
             elif transform == "to_string":
                 if result is not None:
                     result = str(result)
+            elif transform == "format_price":
+                try:
+                    numeric = float(result)
+                except (TypeError, ValueError):
+                    return None
+                result = f"{numeric:.2f}"
             elif transform == "dot_to_comma":
                 if isinstance(result, (int, float)):
                     result = str(result)
