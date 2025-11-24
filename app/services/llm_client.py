@@ -32,6 +32,8 @@ class LLMResult:
 class LLMClient:
     """Клиент OpenAI Assistants API: Threads + Runs."""
 
+    _invalid_json_retries = 2
+
     def __init__(self, settings: LLMSettings, runtime: RuntimeSettings) -> None:
         if not settings.assistant_id:
             raise ValueError("LLM_ASSISTANT_ID обязателен для Assistants API")
@@ -44,19 +46,32 @@ class LLMClient:
         )
 
     def infer(self, row: SourceRow) -> LLMResult:
-        payload = self._request_with_retry(row)
-        raw_text = self._extract_text(payload)
-        self._logger.info(
-            "LLM raw response",
-            product_id=row.product_id,
-            raw=raw_text,
-        )
-        try:
-            data = parse_llm_payload(raw_text, self._logger)
-        except ValueError as exc:
-            raise LLMClientError(str(exc)) from exc
-        self._logger.info("Ответ LLM получен", product_id=row.product_id)
-        return LLMResult(data=data, raw_text=raw_text)
+        last_error: ValueError | None = None
+        for attempt in range(self._invalid_json_retries + 1):
+            payload = self._request_with_retry(row)
+            raw_text = self._extract_text(payload)
+            self._logger.info(
+                "LLM raw response",
+                product_id=row.product_id,
+                raw=raw_text,
+            )
+            try:
+                data = parse_llm_payload(raw_text, self._logger)
+            except ValueError as exc:
+                last_error = exc
+                if attempt >= self._invalid_json_retries:
+                    raise LLMClientError(str(exc)) from exc
+                self._logger.warning(
+                    "LLM вернул невалидный JSON, повторяем запрос",
+                    product_id=row.product_id,
+                    attempt=attempt + 1,
+                    max_attempts=self._invalid_json_retries + 1,
+                )
+                continue
+            self._logger.info("Ответ LLM получен", product_id=row.product_id)
+            return LLMResult(data=data, raw_text=raw_text)
+
+        raise LLMClientError("Не удалось распарсить ответ LLM") from last_error
 
     def _request_with_retry(self, row: SourceRow) -> Dict[str, Any]:
         retryer = Retrying(
