@@ -132,11 +132,28 @@ class LLMClient:
 
     def _compose_prompt(self, row: SourceRow) -> str:
         category = row.category or "не указана"
+        name_en = self._extract_name(row.raw_values, "name (en)")
+        name_ru = self._extract_name(row.raw_values, "name (ru)")
         template = (
             "Категория: {category}\n"
+            "Название (EN): {name_en}\n"
+            "Название (RU): {name_ru}\n"
             "Описание товара:\n{content}"
         )
-        return template.format(category=category, content=row.product_content)
+        return template.format(
+            category=category,
+            name_en=name_en,
+            name_ru=name_ru,
+            content=row.product_content,
+        )
+
+    @staticmethod
+    def _extract_name(raw_values: Dict[str, Any], key: str) -> str:
+        value = raw_values.get(key, "")
+        if not isinstance(value, str):
+            return "не указано"
+        value = value.strip()
+        return value or "не указано"
 
     def _extract_text(self, response_payload: Dict[str, Any]) -> str:
         messages = response_payload.get("data", [])

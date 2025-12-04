@@ -24,7 +24,11 @@ def _source_row() -> SourceRow:
         product_content="desc",
         category="wine",
         image_path=None,
-        raw_values={"product_id_hash": "pid"},
+        raw_values={
+            "product_id_hash": "pid",
+            "name (en)": "Merlot Reserve",
+            "name (ru)": "Мерло Резерв",
+        },
     )
 
 
@@ -63,3 +67,23 @@ def test_llm_client_stops_after_max_invalid_json(monkeypatch):
 
     with pytest.raises(LLMClientError):
         client.infer(_source_row())
+
+
+def test_compose_prompt_contains_names():
+    client = LLMClient(_settings(), _runtime())
+    prompt = client._compose_prompt(_source_row())
+
+    assert "Название (EN): Merlot Reserve" in prompt
+    assert "Название (RU): Мерло Резерв" in prompt
+
+
+def test_compose_prompt_uses_safe_defaults_for_names():
+    client = LLMClient(_settings(), _runtime())
+    row = _source_row()
+    row.raw_values["name (en)"] = "   "
+    row.raw_values.pop("name (ru)", None)
+
+    prompt = client._compose_prompt(row)
+
+    assert "Название (EN): не указано" in prompt
+    assert "Название (RU): не указано" in prompt
