@@ -77,14 +77,21 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 source=MappingSource.JSON,
                 json_path="$.volume_l",
                 target_column="VOLUME",
-                transform=["comma_to_dot"],
+                transform=["comma_to_dot", "to_string", "append_liters_suffix"],
             ),
             MappingRule(
                 name="abv-percent",
                 source=MappingSource.JSON,
                 json_path="$.alcohol_percent",
                 target_column="ABV",
-                transform=["strip_percent", "float"],
+                transform=["strip_percent", "comma_to_dot", "to_string", "append_percent"],
+            ),
+            MappingRule(
+                name="vivino-score",
+                source=MappingSource.JSON,
+                json_path="$.vivino_score",
+                target_column="VIVINO_SCORE",
+                transform=["to_string", "strip"],
             ),
             MappingRule(
                 name="section-path",
@@ -126,6 +133,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
         "category_path": "Вино / Десертное",
         "category": "  Красное ",
         "category_slug": "krasnoe",
+        "vivino_score": " 4.3 ",
     }
 
     patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
@@ -137,11 +145,12 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["ICAT_PRICE_WITHOUT_DISCOUNT"] == "1111.50"
     assert patch["ICAT_PRICE5_PRICE"] == "987.65"
     assert patch["IE_NAME_RIVAL_EN"] == "Rival EN"
-    assert patch["VOLUME"] == "0,75"
-    assert patch["ABV"] == "13,5%"
+    assert patch["VOLUME"] == "0.75 л"
+    assert patch["ABV"] == "13.5 %"
     assert patch["IE_SECTION_PATH"] == "Вино/Красное"
     assert patch["ISECT_NAME"] == "Красное"
     assert patch["ISECT_CODE"] == "krasnoe"
+    assert patch["VIVINO_SCORE"] == "4.3"
 
 
 def test_section_path_fallback_used_when_primary_missing() -> None:

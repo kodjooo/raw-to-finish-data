@@ -128,7 +128,7 @@
   transform:
     - comma_to_dot
     - to_string
-    - dot_to_comma
+    - append_liters_suffix
 
 - name: volume-liters
   source: json
@@ -137,7 +137,7 @@
   transform:
     - comma_to_dot
     - to_string
-    - dot_to_comma
+    - append_liters_suffix
 
 - name: abv
   source: json
@@ -147,7 +147,6 @@
     - strip_percent
     - comma_to_dot
     - to_string
-    - dot_to_comma
     - append_percent
 
 - name: abv-percent
@@ -158,7 +157,6 @@
     - strip_percent
     - comma_to_dot
     - to_string
-    - dot_to_comma
     - append_percent
 
 - name: vintage
@@ -197,6 +195,14 @@
   source: json
   json_path: $.classification
   target_column: Классификация [KLASSIFIKATSIYA] {IP_PROP1029}
+
+- name: vivino-score
+  source: json
+  json_path: $.vivino_score
+  target_column: Оценка Vivino {VIVINO_SCORE}
+  transform:
+    - to_string
+    - strip
 
 - name: body
   source: json

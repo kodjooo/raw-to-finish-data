@@ -126,8 +126,22 @@ class MappingEngine:
                     continue
                 if not isinstance(result, str):
                     result = str(result)
-                if not result.endswith("%"):
-                    result = f"{result}%"
+                normalized = re.sub(r"\s*%$", "", result).strip()
+                if normalized:
+                    result = f"{normalized} %"
+                else:
+                    result = None
+            elif transform == "append_liters_suffix":
+                if result is None:
+                    continue
+                if not isinstance(result, str):
+                    result = str(result)
+                normalized = result.strip()
+                normalized = re.sub(r"\s*(?:л|l)$", "", normalized, flags=re.IGNORECASE).strip()
+                if normalized:
+                    result = f"{normalized} л"
+                else:
+                    result = None
             elif transform == "normalize_slash_path":
                 if isinstance(result, str):
                     fragments = [frag.strip() for frag in result.split("/") if frag.strip()]

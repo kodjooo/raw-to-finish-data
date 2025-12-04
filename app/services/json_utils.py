@@ -21,6 +21,7 @@ class LLMProductSchema(BaseModel):
     aroma: str | None = None
     taste: str | None = None
     classification: str | None = None
+    vivino_score: str | None = None
     description_html: str | None = None
     section_path: str | None = None
     section_name: str | None = None
