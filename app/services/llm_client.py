@@ -136,8 +136,8 @@ class LLMClient:
         name_ru = self._extract_name(row.raw_values, "name (ru)")
         template = (
             "Категория: {category}\n"
-            "Название (EN): {name_en}\n"
-            "Название (RU): {name_ru}\n"
+            "Основное название: {name_en}\n"
+            "Второстепенное название: {name_ru}\n"
             "Описание товара:\n{content}"
         )
         return template.format(
