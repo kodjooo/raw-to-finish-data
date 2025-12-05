@@ -29,6 +29,7 @@
      • `SOURCE_*`, `SINK_*` — параметры листов и колонок.
      • `LLM_*` (включая `LLM_ASSISTANT_ID`) — настройки OpenAI Assistants; `LLM_API_KEY` = ключ OpenAI, `LLM_MODEL` заполняется только если ассистент не используется.
      • `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM`.
+     • `FATAL_ERROR_MARKERS`, `FATAL_ERROR_EXIT_CODE` — список подстрок фатальных ошибок (через `;`) и код выхода, который заставит контейнер перезапуститься (используется для автоматического «оживления» прокси Playwright/браузерного движка).
      • `CONFIG_PATH`, `MAPPING_PATH` — позволяют переопределять путь к yaml-конфига и mapping-файлу.
    - `config/config.yaml`: используется по умолчанию (можно подменить через `CONFIG_PATH`). Внутри храним структурированный словарь `runtime`, `google_auth`, `source_sheet`, `sink_sheet`, `llm`, `mapping`. Значения допускают плейсхолдеры `${ENV_NAME}` — загрузчик заменит их фактическими значениями из окружения.
    - `config/mapping.yaml`: основной mapping, который расписывает правила вида {name, source, (json_path|source_column|const_value), target_column, transform[], write_if_empty}. В текущем эталоне перечислены ключевые поля Bitrix (IE_NAME, IP_PROP**** и т.д.) и обязательно IE_XML_ID/image_path.
@@ -50,6 +51,7 @@
 6. Обработка ошибок и идемпотентность
    - Если `product_content` пустой, строка сразу помечается статусом error с note.
    - При сетевых ошибках работаем с экспоненциальным backoff и лимитом попыток; при превышении лимита строка получает статус error.
+   - Если сообщение об ошибке содержит одну из подстрок `runtime.fatal_error_markers`, Orchestrator генерирует `SystemExit` с `runtime.restart_exit_code`, что даёт Docker Compose право перезапустить контейнер и тем самым освежить прокси/сессию Playwright.
    - Режим upsert_by_xml_id обеспечивает идемпотентность за счёт уникального product_id_hash (маппится на IE_XML_ID). Повторный запуск не перезаписывает поля, которых нет в патче.
 
 7. Тестирование

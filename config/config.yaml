@@ -5,6 +5,8 @@ runtime:
   max_rpm: ${MAX_RPM}
   llm_timeout_seconds: ${LLM_TIMEOUT_SECONDS}
   llm_max_retries: ${LLM_MAX_RETRIES}
+  fatal_error_markers: "${FATAL_ERROR_MARKERS}"
+  restart_exit_code: ${FATAL_ERROR_EXIT_CODE}
 
 google_auth:
   service_account_json_path: ${GOOGLE_SERVICE_ACCOUNT_JSON_PATH}

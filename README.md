@@ -30,6 +30,8 @@ raw-to-finished-data — сервис автоматической постоб�
 - `SOURCE_STATUS_*`, `SOURCE_*_COLUMN` — колонки и статусы workflow.
 - `LLM_API_URL` (обычно `https://api.openai.com/v1`), `LLM_API_KEY` (ключ OpenAI), `LLM_ASSISTANT_ID` (предпочтительно), опционально `LLM_MODEL` (если ассистент не используется), `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`.
 - `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM` — ограничения пайплайна.
+- `FATAL_ERROR_MARKERS` — подстроки (через `;`), при появлении которых в тексте ошибки процесс завершится, чтобы Docker перезапустил контейнер (актуально для исчерпанного прокси-пула Playwright).
+- `FATAL_ERROR_EXIT_CODE` — код выхода при такой фатальной ошибке (по умолчанию `99`).
 - `CONFIG_PATH`, `MAPPING_PATH` — переопределение путей к YAML-конфига и mapping.
 
 Все переменные задокументированы в `.env` (с комментариями, где брать доступы).
@@ -55,9 +57,9 @@ docker compose run --rm processor pytest
    docker compose build processor
    docker compose run --rm processor python -m app.main validate-config
    ```
-5. Запустите сервис в фоне:
+5. Запустите сервис в фоне с пересборкой:
    ```bash
-   docker compose up -d processor
+   docker compose up -d processor --build
    ```
    Логи доступны через `docker compose logs -f processor`. Обновление до новой версии: `git pull`, затем `docker compose build processor && docker compose up -d --force-recreate processor`.
 6. Для ручного запуска одного батча используйте `docker compose run --rm processor python -m app.main run`.

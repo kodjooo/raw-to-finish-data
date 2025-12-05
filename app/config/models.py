@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import AnyUrl, BaseModel, Field, SecretStr, field_validator, model_validator
 
@@ -13,6 +13,28 @@ class RuntimeSettings(BaseModel):
     max_rpm: int = Field(gt=0, description="Лимит запросов в минуту")
     llm_timeout_seconds: int = Field(gt=0, description="Таймаут ожидания ответа LLM")
     llm_max_retries: int = Field(ge=1, description="Количество попыток при ошибках LLM")
+    fatal_error_markers: List[str] = Field(
+        default_factory=list,
+        description="Подстроки фатальных ошибок, при которых сервис завершает работу",
+    )
+    restart_exit_code: int = Field(
+        default=99,
+        ge=1,
+        le=255,
+        description="Код выхода процесса при фатальной ошибке (для рестарта контейнера)",
+    )
+
+    @field_validator("fatal_error_markers", mode="before")
+    @classmethod
+    def _split_error_markers(cls, value: Any) -> Any:
+        if value is None or value == "":
+            return []
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, str):
+            normalized = value.replace("\n", ";")
+            return [item.strip() for item in normalized.split(";") if item.strip()]
+        raise TypeError("fatal_error_markers ожидает список строк или строку")
 
 
 class GoogleAuthSettings(BaseModel):

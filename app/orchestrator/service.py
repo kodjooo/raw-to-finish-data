@@ -53,15 +53,17 @@ class Orchestrator:
                 success += 1
             except Exception as exc:
                 errors += 1
-                note = self._short_error(str(exc))
+                error_message = str(exc)
+                note = self._short_error(error_message)
                 self._logger.error(
                     "Ошибка обработки строки",
                     row=row.row_index,
                     product_id=row.product_id,
-                    error=str(exc),
+                    error=error_message,
                     exc_info=True,
                 )
                 self._source.mark_error(row.row_index, note)
+                self._handle_fatal_error(error_message)
 
         self._logger.info(
             "Цикл обработки завершён",
@@ -75,3 +77,21 @@ class Orchestrator:
         if len(message) <= limit:
             return message
         return f"{message[:limit - 3]}..."
+
+    def _handle_fatal_error(self, message: str) -> None:
+        if not self._should_abort(message):
+            return
+        exit_code = self._config.runtime.restart_exit_code
+        self._logger.critical(
+            "Обнаружена фатальная ошибка — завершаем процесс для рестарта контейнера",
+            exit_code=exit_code,
+            fatal_message=message,
+        )
+        raise SystemExit(exit_code)
+
+    def _should_abort(self, message: str) -> bool:
+        markers = self._config.runtime.fatal_error_markers
+        if not markers:
+            return False
+        lowered = message.casefold()
+        return any(marker.casefold() in lowered for marker in markers)
