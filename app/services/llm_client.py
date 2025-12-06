@@ -135,9 +135,10 @@ class LLMClient:
         name_en = self._extract_name(row.raw_values, "name (en)")
         name_ru = self._extract_name(row.raw_values, "name (ru)")
         template = (
+            "ОБЯЗАТЕЛЬНО ПРОСМОТРИ ВЕКТОРНУЮ БАЗУ!\n"
             "Категория: {category}\n"
-            "Основное название: {name_en}\n"
-            "Второстепенное название: {name_ru}\n"
+            "Основное изначальное название: {name_en}\n"
+            "Второстепенное изначальное название: {name_ru}\n"
             "Описание товара:\n{content}"
         )
         return template.format(
