@@ -55,9 +55,9 @@ docker compose run --rm processor pytest
    docker compose build processor
    docker compose run --rm processor python -m app.main validate-config
    ```
-5. Запустите сервис в фоне:
+5. Запустите сервис в фоне с пересборкой:
    ```bash
-   docker compose up -d processor
+   docker compose up -d processor --build
    ```
    Логи доступны через `docker compose logs -f processor`. Обновление до новой версии: `git pull`, затем `docker compose build processor && docker compose up -d --force-recreate processor`.
 6. Для ручного запуска одного батча используйте `docker compose run --rm processor python -m app.main run`.
