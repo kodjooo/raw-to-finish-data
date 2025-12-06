@@ -56,14 +56,14 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 source=MappingSource.SOURCE_ROW,
                 source_column="price (without discount)",
                 target_column="ICAT_PRICE_WITHOUT_DISCOUNT",
-                transform=["extract_price", "comma_to_dot", "float", "format_price"],
+                transform=["comma_to_dot", "float"],
             ),
             MappingRule(
                 name="price-current",
                 source=MappingSource.SOURCE_ROW,
                 source_column="price (with discount)",
                 target_column="ICAT_PRICE5_PRICE",
-                transform=["extract_price", "comma_to_dot", "float", "format_price"],
+                transform=["comma_to_dot", "float"],
             ),
             MappingRule(
                 name="rival-en",

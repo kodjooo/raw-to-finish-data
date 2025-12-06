@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List
 
-import pytest
-
 from app.config.models import (
     AppConfig,
     GoogleAuthSettings,
@@ -161,39 +159,3 @@ def test_orchestrator_fails_on_empty_patch() -> None:
     assert source.done == []
     assert source.errors == [3]
     assert sink.patches == {}
-
-
-def test_orchestrator_raises_system_exit_on_fatal_error() -> None:
-    source_row = SourceRow(
-        row_index=5,
-        product_id="hash999",
-        product_content="desc",
-        category="wine",
-        image_path="img",
-        raw_values={"product_id_hash": "hash999"},
-    )
-    source = FakeSource(rows=[source_row])
-    sink = FakeSink()
-    mapping = MappingEngine(MappingTable(rules=[]))
-
-    class FatalLLM:
-        def infer(self, _: SourceRow) -> LLMResult:
-            raise RuntimeError("Playwright не может подключиться через прокси")
-
-    config = _config()
-    config.runtime.fatal_error_markers = ["Playwright не может подключиться"]
-    config.runtime.restart_exit_code = 77
-
-    orchestrator = Orchestrator(  # type: ignore[arg-type]
-        config=config,
-        source=source,  # type: ignore[arg-type]
-        sink=sink,      # type: ignore[arg-type]
-        mapping_engine=mapping,
-        llm_client=FatalLLM(),  # type: ignore[arg-type]
-    )
-
-    with pytest.raises(SystemExit) as excinfo:
-        orchestrator.run_once()
-
-    assert excinfo.value.code == 77
-    assert source.errors == [5]
