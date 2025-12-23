@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import time
+import json
 from dataclasses import dataclass
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List
 
 from openai import OpenAI
 from openai import OpenAIError
@@ -30,24 +31,35 @@ class LLMResult:
 
 
 class LLMClient:
-    """Клиент OpenAI Assistants API: Threads + Runs."""
+    """Клиент OpenAI Responses API."""
 
     _invalid_json_retries = 2
 
     def __init__(self, settings: LLMSettings, runtime: RuntimeSettings) -> None:
-        if not settings.assistant_id:
-            raise ValueError("LLM_ASSISTANT_ID обязателен для Assistants API")
+        if not settings.model:
+            raise ValueError("LLM_MODEL обязателен для Responses API")
         self._settings = settings
         self._runtime = runtime
         self._logger = logging_utils.get_logger("llm")
         self._client = OpenAI(
             api_key=settings.api_key.get_secret_value(),
             base_url=str(settings.api_url).rstrip("/"),
+            timeout=self._runtime.llm_timeout_seconds,
         )
+        if not hasattr(self._client, "responses"):
+            raise ValueError("OpenAI SDK не поддерживает Responses API; обновите пакет openai")
+        self._system_prompt = self._load_system_prompt(settings.system_prompt_path)
+        self._user_prompt_template = self._load_user_prompt(settings.user_prompt_path)
 
     def infer(self, row: SourceRow) -> LLMResult:
         last_error: ValueError | None = None
         for attempt in range(self._invalid_json_retries + 1):
+            self._logger.info(
+                "LLM request settings",
+                product_id=row.product_id,
+                model=self._settings.model,
+                reasoning_effort=self._settings.reasoning_effort or "none",
+            )
             payload = self._request_with_retry(row)
             raw_text = self._extract_text(payload)
             self._logger.info(
@@ -68,8 +80,9 @@ class LLMClient:
                     max_attempts=self._invalid_json_retries + 1,
                 )
                 continue
+            formatted_raw = json.dumps(data, ensure_ascii=False, indent=2)
             self._logger.info("Ответ LLM получен", product_id=row.product_id)
-            return LLMResult(data=data, raw_text=raw_text)
+            return LLMResult(data=data, raw_text=formatted_raw)
 
         raise LLMClientError("Не удалось распарсить ответ LLM") from last_error
 
@@ -82,71 +95,51 @@ class LLMClient:
         )
         for attempt in retryer:
             with attempt:
-                return self._call_assistant(row)
-        raise LLMClientError("Не удалось получить ответ от Assistants API")
+                return self._call_response(row)
+        raise LLMClientError("Не удалось получить ответ от Responses API")
 
-    def _call_assistant(self, row: SourceRow) -> Dict[str, Any]:
+    def _call_response(self, row: SourceRow) -> Any:
         try:
-            thread = self._client.beta.threads.create(
+            return self._client.responses.create(
+                model=self._settings.model,
+                input=self._build_messages(row),
+                **self._reasoning_payload(),
                 metadata={"product_id": row.product_id},
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": self._compose_prompt(row),
-                            }
-                        ],
-                    }
-                ],
             )
-            run = self._client.beta.threads.runs.create(
-                thread_id=thread.id,
-                assistant_id=self._settings.assistant_id,
-                **({"model": self._settings.model} if self._settings.model else {}),
-            )
-            completed_run = self._wait_run(thread.id, run.id)
-            if completed_run.status != "completed":
-                error = getattr(completed_run, "last_error", None)
-                raise LLMClientError(f"Run завершился со статусом {completed_run.status}: {error}")
-            return self._client.beta.threads.messages.list(
-                thread_id=thread.id,
-                order="desc",
-                limit=5,
-            ).to_dict()
         except OpenAIError as exc:  # pragma: no cover - сеть
             message = getattr(exc, "message", str(exc))
             self._logger.error("Ошибка OpenAI", error=message)
             raise LLMClientError(message) from exc
 
-    def _wait_run(self, thread_id: str, run_id: str):
-        deadline = time.monotonic() + self._runtime.llm_timeout_seconds
-        while True:
-            run = self._client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
-            if run.status in {"completed", "failed", "cancelled", "expired"}:
-                return run
-            if time.monotonic() >= deadline:
-                raise LLMClientError("Истек таймаут ожидания ответа Assistants")
-            time.sleep(1)
-
     def _compose_prompt(self, row: SourceRow) -> str:
         category = row.category or "не указана"
         name_en = self._extract_name(row.raw_values, "name (en)")
         name_ru = self._extract_name(row.raw_values, "name (ru)")
-        template = (
-            "ОБЯЗАТЕЛЬНО ПРОСМОТРИ ВЕКТОРНУЮ БАЗУ!\n"
-            "Категория: {category}\n"
-            "Основное изначальное название: {name_en}\n"
-            "Второстепенное изначальное название: {name_ru}\n"
-            "Описание товара:\n{content}"
-        )
-        return template.format(
+        if not self._user_prompt_template:
+            raise ValueError("Не задан шаблон пользовательского промпта")
+        return self._user_prompt_template.format(
             category=category,
             name_en=name_en,
             name_ru=name_ru,
             content=row.product_content,
         )
+
+    def _build_messages(self, row: SourceRow) -> List[Dict[str, Any]]:
+        messages: List[Dict[str, Any]] = []
+        if self._system_prompt:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": [{"type": "input_text", "text": self._system_prompt}],
+                }
+            )
+        messages.append(
+            {
+                "role": "user",
+                "content": [{"type": "input_text", "text": self._compose_prompt(row)}],
+            }
+        )
+        return messages
 
     @staticmethod
     def _extract_name(raw_values: Dict[str, Any], key: str) -> str:
@@ -156,23 +149,53 @@ class LLMClient:
         value = value.strip()
         return value or "не указано"
 
-    def _extract_text(self, response_payload: Dict[str, Any]) -> str:
-        messages = response_payload.get("data", [])
-        for message in messages:
-            if message.get("role") != "assistant":
-                continue
-            chunks: list[str] = []
-            for content in message.get("content", []) or []:
-                text_block = content.get("text")
-                if isinstance(text_block, dict):
-                    value = text_block.get("value")
-                    if isinstance(value, str):
-                        chunks.append(value)
-                elif isinstance(text_block, str):
-                    chunks.append(text_block)
-            if chunks:
-                return "".join(chunks)
-        raise LLMClientError("Assistants API вернул пустое сообщение")
+    def _extract_text(self, response_payload: Any) -> str:
+        output_text = getattr(response_payload, "output_text", None)
+        if isinstance(output_text, str) and output_text.strip():
+            return output_text
+
+        payload = response_payload.to_dict() if hasattr(response_payload, "to_dict") else response_payload
+        if isinstance(payload, dict):
+            for output in payload.get("output", []) or []:
+                if output.get("type") != "message":
+                    continue
+                for content in output.get("content", []) or []:
+                    if content.get("type") not in {"output_text", "text"}:
+                        continue
+                    text = content.get("text")
+                    if isinstance(text, str) and text.strip():
+                        return text
+                    if isinstance(text, dict):
+                        value = text.get("value") or text.get("text")
+                        if isinstance(value, str) and value.strip():
+                            return value
+        raise LLMClientError("Responses API вернул пустое сообщение")
+
+    def _reasoning_payload(self) -> Dict[str, Any]:
+        effort = self._settings.reasoning_effort
+        if not effort or effort == "none":
+            return {}
+        return {"reasoning": {"effort": effort}}
+
+    @staticmethod
+    def _load_system_prompt(path: Path | None) -> str | None:
+        if not path:
+            return None
+        if not path.exists():
+            raise ValueError(f"Не найден файл системного промпта {path}")
+        content = path.read_text(encoding="utf-8").strip()
+        return content or None
+
+    @staticmethod
+    def _load_user_prompt(path: Path | None) -> str:
+        if not path:
+            raise ValueError("Не задан путь к пользовательскому промпту")
+        if not path.exists():
+            raise ValueError(f"Не найден файл пользовательского промпта {path}")
+        content = path.read_text(encoding="utf-8").strip()
+        if not content:
+            raise ValueError("Файл пользовательского промпта пустой")
+        return content
 
     def __enter__(self) -> "LLMClient":
         return self

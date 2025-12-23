@@ -13,6 +13,7 @@ from app.config.loader import load_app_config, load_mapping
 from app.core import logging as logging_utils
 from app.core.mapping_engine import MappingEngine
 from app.orchestrator.service import Orchestrator
+from app.services.brand_registry import BrandRegistry
 from app.services.llm_client import LLMClient
 
 app = typer.Typer(help="CLI для сервиса структурирования товарных данных")
@@ -73,6 +74,7 @@ def run(
     source_adapter = SourceSheetAdapter(google_client, config.source_sheet)
     sink_adapter = SinkSheetAdapter(google_client, config.sink_sheet)
     mapping_engine = MappingEngine(mapping)
+    brand_registry = BrandRegistry(google_client, config.brand_registry)
 
     with LLMClient(config.llm, config.runtime) as llm_client:
         orchestrator = Orchestrator(
@@ -80,6 +82,7 @@ def run(
             source=source_adapter,
             sink=sink_adapter,
             mapping_engine=mapping_engine,
+            brand_registry=brand_registry,
             llm_client=llm_client,
         )
         orchestrator.run_once()

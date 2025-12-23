@@ -1,6 +1,6 @@
 # raw-to-finished-data
 
-raw-to-finished-data — сервис автоматической постобработки карточек каталога. Он забирает строки из Google Sheet A (источник), отправляет `product_content` и `category` в LLM (Assistants API), валидирует ответ JSON, сопоставляет поля с битриксовым шаблоном по `config/mapping.yaml` и обновляет Google Sheet B. Проект изначально задуман как контейнеризированный (Docker Desktop локально, Docker Engine на сервере) и управляется через CLI `python -m app.main run`.
+raw-to-finished-data — сервис автоматической постобработки карточек каталога. Он забирает строки из Google Sheet A (источник), отправляет `product_content` и `category` в LLM (Responses API), валидирует ответ JSON, сопоставляет поля с битриксовым шаблоном по `config/mapping.yaml` и обновляет Google Sheet B. Проект изначально задуман как контейнеризированный (Docker Desktop локально, Docker Engine на сервере) и управляется через CLI `python -m app.main run`.
 
 ## Быстрый старт (Docker Desktop)
 
@@ -10,7 +10,7 @@ raw-to-finished-data — сервис автоматической постоб�
    # Отредактируйте .env согласно комментариям (ID таблиц, URL LLM, сервисный аккаунт)
    ```
 2. Разместите JSON ключ сервисного аккаунта Google по пути, указанному в `GOOGLE_SERVICE_ACCOUNT_JSON_PATH` (файл монтируется в контейнер read-only).
-3. Получите у ML/OpenAI команды ключ (`LLM_API_KEY`) и `LLM_ASSISTANT_ID` (ID ассистента в OpenAI Assistants) и пропишите их в `.env`.
+3. Получите у ML/OpenAI команды ключ (`LLM_API_KEY`) и выберите модель (`LLM_MODEL`) в OpenAI Console → Models, затем пропишите их в `.env`.
 3. Сборка и проверка конфигов:
    ```bash
    docker compose build processor
@@ -28,7 +28,7 @@ raw-to-finished-data — сервис автоматической постоб�
 - `SOURCE_SPREADSHEET_ID` / `SOURCE_WORKSHEET_NAME` — таблица-источник с сырыми данными.
 - `SINK_SPREADSHEET_ID` / `SINK_WORKSHEET_NAME` — таблица-приёмник (битриксовый шаблон).
 - `SOURCE_STATUS_*`, `SOURCE_*_COLUMN` — колонки и статусы workflow.
-- `LLM_API_URL` (обычно `https://api.openai.com/v1`), `LLM_API_KEY` (ключ OpenAI), `LLM_ASSISTANT_ID` (предпочтительно), опционально `LLM_MODEL` (если ассистент не используется), `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`.
+- `LLM_API_URL` (обычно `https://api.openai.com/v1`), `LLM_API_KEY` (ключ OpenAI), `LLM_MODEL` (модель из OpenAI Console → Models), `LLM_REASONING_EFFORT` (`none|low|medium|high`), `LLM_SYSTEM_PROMPT_PATH` (путь к файлу системного промпта), `LLM_USER_PROMPT_PATH` (путь к файлу пользовательского промпта), `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`.
 - `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM` — ограничения пайплайна.
 - `CONFIG_PATH`, `MAPPING_PATH` — переопределение путей к YAML-конфига и mapping.
 

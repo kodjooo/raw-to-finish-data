@@ -52,17 +52,26 @@ class LLMSettings(BaseModel):
     api_url: AnyUrl
     api_key: SecretStr
     model: Optional[str] = None
-    assistant_id: Optional[str] = None
+    reasoning_effort: Optional[Literal["none", "low", "medium", "high"]] = None
+    system_prompt_path: Optional[Path] = None
+    user_prompt_path: Optional[Path] = None
 
     @model_validator(mode="after")
     def _ensure_target(self) -> "LLMSettings":
-        if not self.assistant_id and not self.model:
-            raise ValueError("Нужно задать LLM_ASSISTANT_ID или LLM_MODEL")
+        if not self.model:
+            raise ValueError("Нужно задать LLM_MODEL")
         return self
 
 
 class MappingSettings(BaseModel):
     path: Path
+
+
+class BrandRegistrySettings(BaseModel):
+    spreadsheet_id: str
+    worksheet_name: str
+    name_column: str
+    id_column: str
 
 
 class AppConfig(BaseModel):
@@ -73,6 +82,7 @@ class AppConfig(BaseModel):
     sink_sheet: SinkSheetSettings
     llm: LLMSettings
     mapping: MappingSettings
+    brand_registry: BrandRegistrySettings
 
     @field_validator("version")
     @classmethod

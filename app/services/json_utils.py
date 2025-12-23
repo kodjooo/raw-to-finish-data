@@ -13,7 +13,7 @@ class LLMProductSchema(BaseModel):
     brand: str | None = None
     country: str | None = None
     region: str | None = None
-    grape_varieties: list[str] | None = None
+    grape_varieties: list[str] | str | None = None
     sugar: str | None = None
     volume: str | None = None
     abv: str | None = None
@@ -35,8 +35,7 @@ class LLMProductSchema(BaseModel):
         if value is None:
             return None
         if isinstance(value, str):
-            items = [item.strip() for item in value.split(",") if item.strip()]
-            return items or None
+            return value.strip() or None
         if isinstance(value, (list, tuple, set)):
             return [str(item).strip() for item in value if str(item).strip()]
         return value

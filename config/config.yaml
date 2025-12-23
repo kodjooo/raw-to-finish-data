@@ -35,7 +35,15 @@ llm:
   api_url: ${LLM_API_URL}
   api_key: ${LLM_API_KEY}
   model: ${LLM_MODEL}
-  assistant_id: ${LLM_ASSISTANT_ID}
+  reasoning_effort: ${LLM_REASONING_EFFORT}
+  system_prompt_path: ${LLM_SYSTEM_PROMPT_PATH}
+  user_prompt_path: ${LLM_USER_PROMPT_PATH}
 
 mapping:
   path: ${MAPPING_PATH}
+
+brand_registry:
+  spreadsheet_id: ${BRAND_REGISTRY_SPREADSHEET_ID}
+  worksheet_name: ${BRAND_REGISTRY_WORKSHEET_NAME}
+  name_column: ${BRAND_REGISTRY_NAME_COLUMN}
+  id_column: ${BRAND_REGISTRY_ID_COLUMN}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import types
+from pathlib import Path
 
 import pytest
 
@@ -14,7 +15,13 @@ def _runtime() -> RuntimeSettings:
 
 
 def _settings() -> LLMSettings:
-    return LLMSettings(api_url="https://example.com", api_key="test-key", assistant_id="asst_123")
+    return LLMSettings(
+        api_url="https://example.com",
+        api_key="test-key",
+        model="gpt-5-nano-2025-08-07",
+        reasoning_effort="low",
+        user_prompt_path=Path("config/user_prompt.txt"),
+    )
 
 
 def _source_row() -> SourceRow:
@@ -73,8 +80,8 @@ def test_compose_prompt_contains_names():
     client = LLMClient(_settings(), _runtime())
     prompt = client._compose_prompt(_source_row())
 
-    assert "Название (EN): Merlot Reserve" in prompt
-    assert "Название (RU): Мерло Резерв" in prompt
+    assert "Основное изначальное название: Merlot Reserve" in prompt
+    assert "Второстепенное изначальное название: Мерло Резерв" in prompt
 
 
 def test_compose_prompt_uses_safe_defaults_for_names():
@@ -85,5 +92,5 @@ def test_compose_prompt_uses_safe_defaults_for_names():
 
     prompt = client._compose_prompt(row)
 
-    assert "Название (EN): не указано" in prompt
-    assert "Название (RU): не указано" in prompt
+    assert "Основное изначальное название: не указано" in prompt
+    assert "Второстепенное изначальное название: не указано" in prompt

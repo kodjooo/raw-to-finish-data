@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from app.config.models import (
     AppConfig,
+    BrandRegistrySettings,
     GoogleAuthSettings,
     LLMSettings,
     MappingRule,
@@ -56,6 +57,11 @@ class FakeLLM:
         return LLMResult(data=self.response, raw_text="{}")
 
 
+class FakeBrandRegistry:
+    def attach_brand_id(self, result: LLMResult) -> LLMResult:
+        return result
+
+
 def _config() -> AppConfig:
     return AppConfig(
         runtime=RuntimeSettings(batch_size=10, max_rps=2, max_rpm=60, llm_timeout_seconds=30, llm_max_retries=1),
@@ -83,6 +89,12 @@ def _config() -> AppConfig:
         ),
         llm=LLMSettings(api_url="https://example.com", api_key="dummy", model="gpt"),
         mapping=MappingSettings(path="config/mapping.yaml"),
+        brand_registry=BrandRegistrySettings(
+            spreadsheet_id="brands",
+            worksheet_name="registry",
+            name_column="brand",
+            id_column="brand_id",
+        ),
     )
 
 
@@ -116,12 +128,14 @@ def test_orchestrator_success_flow() -> None:
         )
     )
     llm = FakeLLM({"name": "Test"})
+    registry = FakeBrandRegistry()
 
     orchestrator = Orchestrator(  # type: ignore[arg-type]
         config=_config(),
         source=source,  # type: ignore[arg-type]
         sink=sink,      # type: ignore[arg-type]
         mapping_engine=mapping,
+        brand_registry=registry,  # type: ignore[arg-type]
         llm_client=llm,  # type: ignore[arg-type]
     )
 
@@ -145,12 +159,14 @@ def test_orchestrator_fails_on_empty_patch() -> None:
     sink = FakeSink()
     mapping = MappingEngine(MappingTable(rules=[]))
     llm = FakeLLM({})
+    registry = FakeBrandRegistry()
 
     orchestrator = Orchestrator(  # type: ignore[arg-type]
         config=_config(),
         source=source,  # type: ignore[arg-type]
         sink=sink,      # type: ignore[arg-type]
         mapping_engine=mapping,
+        brand_registry=registry,  # type: ignore[arg-type]
         llm_client=llm,  # type: ignore[arg-type]
     )
 

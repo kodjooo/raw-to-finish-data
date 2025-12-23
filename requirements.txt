@@ -15,4 +15,4 @@ pytest==8.3.3
 pytest-mock==3.14.0
 respx==0.21.1
 responses==0.25.3
-openai==1.55.3
+openai==1.66.3

@@ -6,6 +6,7 @@ from app.config.models import AppConfig
 from app.core import logging as logging_utils
 from app.core.mapping_engine import MappingEngine
 from app.core.rate_limiter import RateLimiter
+from app.services.brand_registry import BrandRegistry
 from app.services.llm_client import LLMClient
 
 
@@ -16,12 +17,14 @@ class Orchestrator:
         source: SourceSheetAdapter,
         sink: SinkSheetAdapter,
         mapping_engine: MappingEngine,
+        brand_registry: BrandRegistry,
         llm_client: LLMClient,
     ) -> None:
         self._config = config
         self._source = source
         self._sink = sink
         self._mapping_engine = mapping_engine
+        self._brand_registry = brand_registry
         self._llm = llm_client
         self._logger = logging_utils.get_logger("orchestrator")
         self._rate_limiter = RateLimiter(
@@ -42,6 +45,7 @@ class Orchestrator:
             try:
                 self._rate_limiter.wait()
                 llm_result = self._llm.infer(row)
+                llm_result = self._brand_registry.attach_brand_id(llm_result)
                 patch = self._mapping_engine.build_patch(
                     llm_data=llm_result.data,
                     source_row=row,

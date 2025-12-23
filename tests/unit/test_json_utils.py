@@ -29,4 +29,4 @@ def test_parse_llm_payload_normalizes_grape_varieties():
     logger = logging_utils.get_logger("test")
     raw = '{"grape_varieties": "Cabernet Sauvignon, Merlot "}'
     result = parse_llm_payload(raw, logger)
-    assert result["grape_varieties"] == ["Cabernet Sauvignon", "Merlot"]
+    assert result["grape_varieties"] == "Cabernet Sauvignon, Merlot"

@@ -100,8 +100,10 @@ class MappingEngine:
                 result = re.sub(r"[^0-9,.\-]", "", result)
             elif transform == "comma_to_dot":
                 if isinstance(result, str):
-                    # Удаляем любые пробелы/неразрывные пробелы перед заменой запятой на точку
-                    result = re.sub(r"\s+", "", result).replace(",", ".")
+                    # Нормализуем числовую строку перед заменой запятой на точку.
+                    cleaned = re.sub(r"\s+", "", result)
+                    cleaned = re.sub(r"[^0-9,.\-]", "", cleaned)
+                    result = cleaned.replace(",", ".")
                 elif isinstance(result, (int, float)):
                     result = str(result)
             elif transform == "strip_percent":
