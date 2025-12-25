@@ -23,6 +23,13 @@
   transform:
     - strip
 
+- name: name-minor
+  source: json
+  json_path: $.name_minor
+  target_column: Наименование элемента (minor) {IE_NAME_MINOR}
+  transform:
+    - strip
+
 - name: name-rival-en
   source: source_row
   source_column: name (en)
@@ -54,19 +61,10 @@
   const_value: text
   target_column: Тип детального описания {IE_DETAIL_TEXT_TYPE}
 
-- name: section-path
-  source: json
-  json_path: $.section_path
-  target_column: Путь из названий разделов {IE_SECTION_PATH}
-  transform:
-    - normalize_slash_path
-
-- name: section-path-category-path
+- name: category_path
   source: json
   json_path: $.category_path
   target_column: Путь из названий разделов {IE_SECTION_PATH}
-  transform:
-    - normalize_slash_path
 
 - name: section-name-category
   source: json
@@ -79,6 +77,13 @@
   source: json
   json_path: $.brand
   target_column: Бренд [BREND] {IP_PROP1012}
+  transform:
+    - strip
+
+- name: brand_id
+  source: json
+  json_path: $.brand_id
+  target_column: Бренд [BRANDS] {IP_PROP1121}
   transform:
     - strip
 
@@ -104,10 +109,29 @@
   transform:
     - strip
 
+- name: gift_wrapping
+  source: json
+  json_path: $.gift_wrapping
+  target_column: Упаковка [UPAKOVKA] {IP_PROP1056}
+  transform:
+    - strip
+
+- name: color_depth
+  source: json
+  json_path: $.color_depth
+  target_column: Глубина цвета [GLUBINA_TSVETA] {IP_PROP1063}
+  transform:
+    - strip
+
+- name: storage_capacity
+  source: json
+  json_path: $.storage capacity
+  target_column: Потенциал хранения [POTENTSIAL_KHRANENIYA] {IP_PROP1071}
+
 - name: grapes
   source: json
   json_path: $.grape_varieties
-  target_column: Виноград [VINOGRAD] {IP_PROP1013}
+  target_column: Сортовой состав [SORTOVOY_SOSTAV] {IP_PROP1072}
   transform:
     - join(', ')
 
@@ -159,15 +183,10 @@
     - to_string
     - append_percent
 
-- name: vintage
-  source: json
-  json_path: $.vintage
-  target_column: Винтаж [VINTAZH] {IP_PROP1061}
-
-- name: vintage-year
+- name: vintage_year
   source: json
   json_path: $.vintage_year
-  target_column: Винтаж [VINTAZH] {IP_PROP1061}
+  target_column: Год урожая [GOD_UROZHAYA] {IP_PROP1022}
 
 - name: color
   source: json

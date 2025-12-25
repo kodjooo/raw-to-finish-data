@@ -80,6 +80,7 @@ class LLMClient:
                     max_attempts=self._invalid_json_retries + 1,
                 )
                 continue
+            data = self._post_process_payload(row, data)
             formatted_raw = json.dumps(data, ensure_ascii=False, indent=2)
             self._logger.info("Ответ LLM получен", product_id=row.product_id)
             return LLMResult(data=data, raw_text=formatted_raw)
@@ -176,6 +177,16 @@ class LLMClient:
         if not effort or effort == "none":
             return {}
         return {"reasoning": {"effort": effort}}
+
+    def _post_process_payload(self, row: SourceRow, data: Dict[str, Any]) -> Dict[str, Any]:
+        result = dict(data)
+        if not self._mentions_vivino(row.product_content):
+            result.pop("vivino_score", None)
+        return result
+
+    @staticmethod
+    def _mentions_vivino(content: str | None) -> bool:
+        return bool(content) and "vivino" in content.lower()
 
     @staticmethod
     def _load_system_prompt(path: Path | None) -> str | None:

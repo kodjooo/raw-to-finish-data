@@ -34,7 +34,7 @@
      • `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM`.
      • `CONFIG_PATH`, `MAPPING_PATH` — позволяют переопределять путь к yaml-конфига и mapping-файлу.
    - `config/config.yaml`: используется по умолчанию (можно подменить через `CONFIG_PATH`). Внутри храним структурированный словарь `runtime`, `google_auth`, `source_sheet`, `sink_sheet`, `llm`, `mapping`, `brand_registry`. Значения допускают плейсхолдеры `${ENV_NAME}` — загрузчик заменит их фактическими значениями из окружения.
-   - `config/mapping.yaml`: основной mapping, который расписывает правила вида {name, source, (json_path|source_column|const_value), target_column, transform[], write_if_empty}. В текущем эталоне перечислены ключевые поля Bitrix (IE_NAME, IP_PROP**** и т.д.) и обязательно IE_XML_ID/image_path.
+   - `config/mapping.yaml`: основной mapping, который расписывает правила вида {name, source, (json_path|source_column|const_value), target_column, transform[], write_if_empty}. В текущем эталоне перечислены ключевые поля Bitrix (IE_NAME, IE_NAME_MINOR, IP_PROP**** и т.д.) и обязательно IE_XML_ID/image_path.
    - Доступ к JSON сервисного аккаунта обеспечивается через хостовую папку `./secrets`, смонтированную в контейнер `processor` (read-only) по умолчанию; внутри ожидается файл `google-credentials.json`, путь указан в `.env`.
 
 4. Технологический стек

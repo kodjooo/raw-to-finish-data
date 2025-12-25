@@ -126,6 +126,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     engine = MappingEngine(table)
     llm_data = {
         "name": "  Test Name  ",
+        "name_minor": "  Test Minor ",
         "grape_varieties": ["Cabernet", "Merlot"],
         "volume_l": "0,75",
         "alcohol_percent": "13.5%",
@@ -140,6 +141,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
 
     assert patch["IE_XML_ID"] == "hash123"
     assert patch["IE_NAME"] == "Test Name"
+    assert patch["IE_NAME_MINOR"] == "Test Minor"
     assert patch["IP_PROP1013"] == "Cabernet, Merlot"
     assert patch["IE_DETAIL_TEXT_TYPE"] == "text"
     assert patch["ICAT_PRICE_WITHOUT_DISCOUNT"] == 1111.5

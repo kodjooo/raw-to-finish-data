@@ -94,3 +94,42 @@ def test_compose_prompt_uses_safe_defaults_for_names():
 
     assert "Основное изначальное название: не указано" in prompt
     assert "Второстепенное изначальное название: не указано" in prompt
+
+
+def test_infer_drops_vivino_score_if_not_mentioned(monkeypatch):
+    client = LLMClient(_settings(), _runtime())
+    row = _source_row()
+    row.product_content = "Описание вина без оценок"
+
+    def fake_request(self, row):
+        return {}
+
+    def fake_extract(self, payload):
+        return '{"vivino_score": "4.4", "name": "Wine"}'
+
+    monkeypatch.setattr(client, "_request_with_retry", types.MethodType(fake_request, client))
+    monkeypatch.setattr(client, "_extract_text", types.MethodType(fake_extract, client))
+
+    result = client.infer(row)
+
+    assert "vivino_score" not in result.data
+    assert "vivino_score" not in result.raw_text
+
+
+def test_infer_keeps_vivino_score_if_content_mentions(monkeypatch):
+    client = LLMClient(_settings(), _runtime())
+    row = _source_row()
+    row.product_content = "Смотрите Vivino рейтинг"
+
+    def fake_request(self, row):
+        return {}
+
+    def fake_extract(self, payload):
+        return '{"vivino_score": "4.4", "name": "Wine"}'
+
+    monkeypatch.setattr(client, "_request_with_retry", types.MethodType(fake_request, client))
+    monkeypatch.setattr(client, "_extract_text", types.MethodType(fake_extract, client))
+
+    result = client.infer(row)
+
+    assert result.data["vivino_score"] == "4.4"
