@@ -16,9 +16,9 @@
   source_column: image_path
   target_column: Детальная картинка (путь) {IE_DETAIL_PICTURE}
 
-- name: name
+- name: name_main
   source: json
-  json_path: $.name
+  json_path: $.name_main
   target_column: Наименование элемента {IE_NAME}
   transform:
     - strip
