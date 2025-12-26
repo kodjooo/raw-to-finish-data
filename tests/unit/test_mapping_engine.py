@@ -121,6 +121,20 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 target_column="ISECT_CODE",
                 transform=["strip"],
             ),
+            MappingRule(
+                name="producer",
+                source=MappingSource.JSON,
+                json_path="$.producer",
+                target_column="CML2_MANUFACTURER",
+                transform=["strip"],
+            ),
+            MappingRule(
+                name="classifier",
+                source=MappingSource.JSON,
+                json_path="$.classifier",
+                target_column="IP_PROP1029",
+                transform=["strip"],
+            ),
         ]
     )
     engine = MappingEngine(table)
@@ -135,6 +149,8 @@ def test_build_patch_applies_transforms_and_rules() -> None:
         "category": "  Красное ",
         "category_slug": "krasnoe",
         "vivino_score": " 4.3 ",
+        "producer": "  Producer Inc ",
+        "classifier": "DOC",
     }
 
     patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
@@ -153,6 +169,8 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["ISECT_NAME"] == "Красное"
     assert patch["ISECT_CODE"] == "krasnoe"
     assert patch["VIVINO_SCORE"] == "4.3"
+    assert patch["CML2_MANUFACTURER"] == "Producer Inc"
+    assert patch["IP_PROP1029"] == "DOC"
 
 
 def test_section_path_fallback_used_when_primary_missing() -> None:

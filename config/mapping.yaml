@@ -102,9 +102,9 @@
   json_path: $.appellation
   target_column: Аппелласьон [APPELLASON] {IP_PROP1010}
 
-- name: manufacturer
+- name: producer
   source: json
-  json_path: $.manufacturer
+  json_path: $.producer
   target_column: Производитель [CML2_MANUFACTURER] {IP_PROP1008}
   transform:
     - strip
@@ -210,9 +210,9 @@
   json_path: $.taste
   target_column: Вкус [VKUS] {IP_PROP1014}
 
-- name: classification
+- name: classifier
   source: json
-  json_path: $.classification
+  json_path: $.classifier
   target_column: Классификация [KLASSIFIKATSIYA] {IP_PROP1029}
 
 - name: vivino-score
