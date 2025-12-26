@@ -265,16 +265,6 @@
   transform:
     - strip
 
-- name: price-old
-  source: source_row
-  source_column: price (without discount)
-  target_column: Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT}
-  transform:
-    - extract_price
-    - comma_to_dot
-    - float
-    - format_price
-
 - name: price-current
   source: source_row
   source_column: price (with discount)
@@ -283,4 +273,5 @@
     - extract_price
     - comma_to_dot
     - float
+    - max_price('price (without discount)')
     - format_price

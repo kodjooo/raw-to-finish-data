@@ -39,6 +39,13 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 transform=["strip"],
             ),
             MappingRule(
+                name="name-minor",
+                source=MappingSource.JSON,
+                json_path="$.name_minor",
+                target_column="IE_NAME_MINOR",
+                transform=["strip"],
+            ),
+            MappingRule(
                 name="grapes",
                 source=MappingSource.JSON,
                 json_path="$.grape_varieties",
@@ -52,18 +59,11 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 target_column="IE_DETAIL_TEXT_TYPE",
             ),
             MappingRule(
-                name="price-old",
-                source=MappingSource.SOURCE_ROW,
-                source_column="price (without discount)",
-                target_column="ICAT_PRICE_WITHOUT_DISCOUNT",
-                transform=["comma_to_dot", "float"],
-            ),
-            MappingRule(
                 name="price-current",
                 source=MappingSource.SOURCE_ROW,
                 source_column="price (with discount)",
                 target_column="ICAT_PRICE5_PRICE",
-                transform=["comma_to_dot", "float"],
+                transform=["comma_to_dot", "float", "max_price('price (without discount)')", "format_price"],
             ),
             MappingRule(
                 name="rival-en",
@@ -160,8 +160,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["IE_NAME_MINOR"] == "Test Minor"
     assert patch["IP_PROP1013"] == "Cabernet, Merlot"
     assert patch["IE_DETAIL_TEXT_TYPE"] == "text"
-    assert patch["ICAT_PRICE_WITHOUT_DISCOUNT"] == 1111.5
-    assert patch["ICAT_PRICE5_PRICE"] == 987.65
+    assert patch["ICAT_PRICE5_PRICE"] == "1111.50"
     assert patch["IE_NAME_RIVAL_EN"] == "Rival EN"
     assert patch["VOLUME"] == "0.75 л"
     assert patch["ABV"] == "13.5 %"

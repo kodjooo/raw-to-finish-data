@@ -19,7 +19,7 @@ class MappingEngine:
             value = self._extract_value(rule, llm_data, source_row)
             if value is None and rule.source is not MappingSource.CONST:
                 continue
-            value = self._apply_transforms(value, rule.transform)
+            value = self._apply_transforms(value, rule.transform, source_row=source_row)
             if self._is_empty(value) and not (rule.write_if_empty or rule.source is MappingSource.CONST):
                 continue
             existing = patch.get(rule.target_column)
@@ -67,7 +67,13 @@ class MappingEngine:
                 return None
         return current
 
-    def _apply_transforms(self, value: Any, transforms: Iterable[str]) -> Any:
+    def _apply_transforms(
+        self,
+        value: Any,
+        transforms: Iterable[str],
+        *,
+        source_row: SourceRow | None = None,
+    ) -> Any:
         result = value
         for transform in transforms or []:
             if transform == "strip":
@@ -98,6 +104,23 @@ class MappingEngine:
                 if not isinstance(result, str):
                     result = str(result)
                 result = re.sub(r"[^0-9,.\-]", "", result)
+            elif transform.startswith("max_price(") and transform.endswith(")"):
+                if source_row is None:
+                    return None
+                other_column = transform[len("max_price("):-1].strip()
+                if other_column.startswith(("'", '"')) and other_column.endswith(("'", '"')):
+                    other_column = other_column[1:-1]
+                other_value = source_row.raw_values.get(other_column)
+                current = self._parse_price(result)
+                other = self._parse_price(other_value)
+                if current is None and other is None:
+                    return None
+                if current is None:
+                    result = other
+                elif other is None:
+                    result = current
+                else:
+                    result = max(current, other)
             elif transform == "comma_to_dot":
                 if isinstance(result, str):
                     # Нормализуем числовую строку перед заменой запятой на точку.
@@ -149,6 +172,21 @@ class MappingEngine:
                     fragments = [frag.strip() for frag in result.split("/") if frag.strip()]
                     result = "/".join(fragments)
         return result
+
+    @staticmethod
+    def _parse_price(value: Any) -> float | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            value = str(value)
+        cleaned = re.sub(r"\s+", "", value)
+        cleaned = re.sub(r"[^0-9,.\-]", "", cleaned)
+        if not cleaned:
+            return None
+        try:
+            return float(cleaned.replace(",", "."))
+        except ValueError:
+            return None
 
     def _is_empty(self, value: Any) -> bool:
         if value is None:
