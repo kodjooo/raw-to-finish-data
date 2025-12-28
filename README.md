@@ -45,7 +45,7 @@ docker compose run --rm processor pytest
 1. Убедитесь, что на сервере стоят Docker Engine + Docker Compose v2 и настроен доступ по SSH.
 2. Склонируйте репозиторий и перейдите в каталог:
    ```bash
-   git clone git@github.com:kodjooo/raw-to-finish-data.git
+   git clone https://github.com/kodjooo/raw-to-finish-data.git
    cd raw-to-finish-data
    ```
 3. Скопируйте `.env` (со всеми секретами) и JSON ключ сервисного аккаунта Google (например, `secrets/google-credentials.json`). Никогда не коммитьте эти файлы.
