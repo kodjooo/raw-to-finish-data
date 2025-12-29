@@ -64,13 +64,21 @@ class FakeBrandRegistry:
 
 def _config() -> AppConfig:
     return AppConfig(
-        runtime=RuntimeSettings(batch_size=10, max_rps=2, max_rpm=60, llm_timeout_seconds=30, llm_max_retries=1),
+        runtime=RuntimeSettings(
+            batch_size=10,
+            max_rps=2,
+            max_rpm=60,
+            llm_timeout_seconds=30,
+            llm_max_retries=1,
+            worker_id="worker-1",
+        ),
         google_auth=GoogleAuthSettings(service_account_json_path="/tmp/key.json", delegated_user=None),
         source_sheet=SourceSheetSettings(
             spreadsheet_id="src",
             worksheet_name="ws",
             status_column="status",
             status_new="Не обработано",
+            status_in_progress="В обработке",
             status_done="Обработано",
             status_error="Ошибка",
             note_column="note",
@@ -80,6 +88,9 @@ def _config() -> AppConfig:
             id_column="product_id_hash",
             processed_at_column="processed_at",
             llm_raw_column="llm_raw",
+            worker_column="worker_id",
+            in_progress_at_column="in_progress_at",
+            in_progress_ttl_seconds=1800,
         ),
         sink_sheet=SinkSheetSettings(
             spreadsheet_id="sink",

@@ -71,7 +71,11 @@ def run(
         credentials_path=config.google_auth.service_account_json_path,
         delegated_user=config.google_auth.delegated_user or None,
     )
-    source_adapter = SourceSheetAdapter(google_client, config.source_sheet)
+    source_adapter = SourceSheetAdapter(
+        google_client,
+        config.source_sheet,
+        worker_id=config.runtime.worker_id,
+    )
     sink_adapter = SinkSheetAdapter(google_client, config.sink_sheet)
     mapping_engine = MappingEngine(mapping)
     brand_registry = BrandRegistry(google_client, config.brand_registry)

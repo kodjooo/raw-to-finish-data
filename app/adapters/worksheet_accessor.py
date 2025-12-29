@@ -43,6 +43,14 @@ class WorksheetAccessor:
             rows.append((offset, row_dict))
         return rows
 
+    def get_row(self, row_index: int) -> Dict[str, Any]:
+        header = self.header()
+        row_values = self._worksheet.row_values(row_index)
+        row_dict: Dict[str, Any] = {}
+        for idx, column_name in enumerate(header):
+            row_dict[column_name] = row_values[idx] if idx < len(row_values) else ""
+        return row_dict
+
     def update_row(self, row_index: int, values: Dict[str, Any]) -> None:
         requests = []
         for column_name, cell_value in values.items():

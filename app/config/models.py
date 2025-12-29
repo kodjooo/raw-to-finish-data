@@ -13,6 +13,7 @@ class RuntimeSettings(BaseModel):
     max_rpm: int = Field(gt=0, description="Лимит запросов в минуту")
     llm_timeout_seconds: int = Field(gt=0, description="Таймаут ожидания ответа LLM")
     llm_max_retries: int = Field(ge=1, description="Количество попыток при ошибках LLM")
+    worker_id: Optional[str] = Field(default=None, description="Идентификатор обработчика")
 
 
 class GoogleAuthSettings(BaseModel):
@@ -25,6 +26,7 @@ class SourceSheetSettings(BaseModel):
     worksheet_name: str
     status_column: str
     status_new: str
+    status_in_progress: Optional[str] = None
     status_done: str
     status_error: str
     note_column: str
@@ -34,6 +36,9 @@ class SourceSheetSettings(BaseModel):
     id_column: str
     processed_at_column: Optional[str] = None
     llm_raw_column: Optional[str] = None
+    worker_column: Optional[str] = None
+    in_progress_at_column: Optional[str] = None
+    in_progress_ttl_seconds: Optional[int] = None
 
 
 class SinkMode(str, Enum):
