@@ -11,10 +11,19 @@
   transform:
     - strip
 
+- name: source_site
+  source: source_row
+  source_column: source_site
+  target_column: Источник {IE_LINK_RIVAL}
+  transform:
+    - strip
+
 - name: image-main
   source: source_row
   source_column: image_path
   target_column: Детальная картинка (путь) {IE_DETAIL_PICTURE}
+  transform:
+    - prepend_images_path
 
 - name: name_main
   source: json

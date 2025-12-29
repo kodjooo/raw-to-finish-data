@@ -73,6 +73,13 @@ def test_build_patch_applies_transforms_and_rules() -> None:
                 transform=["strip"],
             ),
             MappingRule(
+                name="image-main",
+                source=MappingSource.SOURCE_ROW,
+                source_column="image_path",
+                target_column="IE_DETAIL_PICTURE",
+                transform=["prepend_images_path"],
+            ),
+            MappingRule(
                 name="volume-liters",
                 source=MappingSource.JSON,
                 json_path="$.volume_l",
@@ -162,6 +169,7 @@ def test_build_patch_applies_transforms_and_rules() -> None:
     assert patch["IE_DETAIL_TEXT_TYPE"] == "text"
     assert patch["ICAT_PRICE5_PRICE"] == "1111.50"
     assert patch["IE_NAME_RIVAL_EN"] == "Rival EN"
+    assert patch["IE_DETAIL_PICTURE"] == "/images/img.jpg"
     assert patch["VOLUME"] == "0.75 л"
     assert patch["ABV"] == "13.5 %"
     assert patch["IE_SECTION_PATH"] == "Вино/Красное"

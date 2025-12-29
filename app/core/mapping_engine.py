@@ -171,6 +171,11 @@ class MappingEngine:
                 if isinstance(result, str):
                     fragments = [frag.strip() for frag in result.split("/") if frag.strip()]
                     result = "/".join(fragments)
+            elif transform == "prepend_images_path":
+                if isinstance(result, str):
+                    normalized = result.strip().lstrip("/")
+                    if normalized:
+                        result = f"/images/{normalized}"
         return result
 
     @staticmethod
