@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import List, Optional
+from uuid import uuid4
 
 import socket
+import time
+import random
 
 from app.adapters.google_client import GoogleSheetsClient
 from app.adapters.worksheet_accessor import WorksheetAccessor
@@ -51,7 +54,8 @@ class SourceSheetAdapter:
                 self.mark_error(row_index, "Пустой product_id_hash")
                 continue
 
-            if not self._claim_row(row_index):
+            claim_token = self._claim_row(row_index)
+            if not claim_token:
                 continue
 
             pending.append(
@@ -61,6 +65,7 @@ class SourceSheetAdapter:
                     product_content=product_content,
                     category=str(row_data.get(self._settings.category_column, "")),
                     image_path=row_data.get(self._settings.image_column),
+                    claim_token=claim_token,
                     raw_values=row_data,
                 )
             )
@@ -74,16 +79,27 @@ class SourceSheetAdapter:
         )
         return pending
 
-    def is_claimed_by_me(self, row_index: int) -> bool:
+    def is_claimed_by_me(self, row_index: int, claim_token: Optional[str] = None) -> bool:
         if not self._settings.status_in_progress:
             return True
         fresh = self._get_accessor().get_row(row_index)
         status = str(fresh.get(self._settings.status_column, ""))
         if status != self._settings.status_in_progress:
             return False
+        if claim_token and self._settings.claim_token_column:
+            token = str(fresh.get(self._settings.claim_token_column, "")).strip()
+            if token != claim_token:
+                return False
         if self._settings.worker_column:
             return str(fresh.get(self._settings.worker_column, "")).strip() == self._worker_id
         return True
+
+    def confirm_claim(self, row_index: int, claim_token: Optional[str]) -> bool:
+        if not self._settings.status_in_progress:
+            return True
+        # Small jitter reduces race window between workers.
+        time.sleep(random.uniform(0.05, 0.25))
+        return self.is_claimed_by_me(row_index, claim_token=claim_token)
 
     def mark_error(self, row_index: int, note: str) -> None:
         updates = {
@@ -123,9 +139,10 @@ class SourceSheetAdapter:
             self._accessor = WorksheetAccessor(worksheet)
         return self._accessor
 
-    def _claim_row(self, row_index: int) -> bool:
+    def _claim_row(self, row_index: int) -> Optional[str]:
         if not self._settings.status_in_progress:
-            return True
+            return "no-claim"
+        token = uuid4().hex
         updates = {
             self._settings.status_column: self._settings.status_in_progress,
         }
@@ -133,14 +150,21 @@ class SourceSheetAdapter:
             updates[self._settings.worker_column] = self._worker_id
         if self._settings.in_progress_at_column:
             updates[self._settings.in_progress_at_column] = datetime.now(timezone.utc).isoformat()
+        if self._settings.claim_token_column:
+            updates[self._settings.claim_token_column] = token
         self._get_accessor().update_row(row_index, updates)
         fresh = self._get_accessor().get_row(row_index)
         status = str(fresh.get(self._settings.status_column, ""))
         if status != self._settings.status_in_progress:
-            return False
+            return None
+        if self._settings.claim_token_column:
+            current_token = str(fresh.get(self._settings.claim_token_column, "")).strip()
+            if current_token != token:
+                return None
         if self._settings.worker_column:
-            return str(fresh.get(self._settings.worker_column, "")).strip() == self._worker_id
-        return True
+            if str(fresh.get(self._settings.worker_column, "")).strip() != self._worker_id:
+                return None
+        return token
 
     def _release_row(self, row_index: int) -> None:
         updates = {
@@ -150,6 +174,8 @@ class SourceSheetAdapter:
             updates[self._settings.worker_column] = ""
         if self._settings.in_progress_at_column:
             updates[self._settings.in_progress_at_column] = ""
+        if self._settings.claim_token_column:
+            updates[self._settings.claim_token_column] = ""
         self._get_accessor().update_row(row_index, updates)
         self._logger.warning("Освобождён зависший статус", row=row_index)
 

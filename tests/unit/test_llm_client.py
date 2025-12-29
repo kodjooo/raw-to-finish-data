@@ -31,6 +31,7 @@ def _source_row() -> SourceRow:
         product_content="desc",
         category="wine",
         image_path=None,
+        claim_token=None,
         raw_values={
             "product_id_hash": "pid",
             "name (en)": "Merlot Reserve",

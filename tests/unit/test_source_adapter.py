@@ -48,6 +48,7 @@ def _settings():
         worker_column="worker_id",
         in_progress_at_column="in_progress_at",
         in_progress_ttl_seconds=60,
+        claim_token_column="claim_token",
     )
 
 
@@ -76,6 +77,7 @@ def test_fetch_pending_claims_row():
     assert pending[0].product_id == "pid"
     assert accessor.get_row(2)["status"] == "В обработке"
     assert accessor.get_row(2)["worker_id"] == "worker-1"
+    assert accessor.get_row(2)["claim_token"] != ""
 
 
 def test_fetch_pending_releases_stale_row():

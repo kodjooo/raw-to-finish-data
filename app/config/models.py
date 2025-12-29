@@ -39,6 +39,7 @@ class SourceSheetSettings(BaseModel):
     worker_column: Optional[str] = None
     in_progress_at_column: Optional[str] = None
     in_progress_ttl_seconds: Optional[int] = None
+    claim_token_column: Optional[str] = None
 
 
 class SinkMode(str, Enum):

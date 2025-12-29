@@ -43,7 +43,7 @@ class Orchestrator:
         errors = 0
         for row in rows:
             try:
-                if not self._source.is_claimed_by_me(row.row_index):
+                if not self._source.confirm_claim(row.row_index, row.claim_token):
                     self._logger.warning(
                         "Строка уже обрабатывается другим воркером",
                         row=row.row_index,

@@ -27,7 +27,7 @@ raw-to-finished-data — сервис автоматической постоб�
 - `GOOGLE_SERVICE_ACCOUNT_JSON_PATH` — путь к JSON сервисного аккаунта (IAM → Service Accounts).
 - `SOURCE_SPREADSHEET_ID` / `SOURCE_WORKSHEET_NAME` — таблица-источник с сырыми данными.
 - `SINK_SPREADSHEET_ID` / `SINK_WORKSHEET_NAME` — таблица-приёмник (битриксовый шаблон).
-- `SOURCE_STATUS_*`, `SOURCE_*_COLUMN` — колонки и статусы workflow (включая `SOURCE_STATUS_IN_PROGRESS`, `SOURCE_WORKER_COLUMN`, `SOURCE_IN_PROGRESS_AT_COLUMN`, `SOURCE_IN_PROGRESS_TTL_SECONDS`).
+- `SOURCE_STATUS_*`, `SOURCE_*_COLUMN` — колонки и статусы workflow (включая `SOURCE_STATUS_IN_PROGRESS`, `SOURCE_WORKER_COLUMN`, `SOURCE_IN_PROGRESS_AT_COLUMN`, `SOURCE_IN_PROGRESS_TTL_SECONDS`, `SOURCE_CLAIM_TOKEN_COLUMN`).
 - `LLM_API_URL` (обычно `https://api.openai.com/v1`), `LLM_API_KEY` (ключ OpenAI), `LLM_MODEL` (модель из OpenAI Console → Models), `LLM_REASONING_EFFORT` (`none|low|medium|high`), `LLM_SYSTEM_PROMPT_PATH` (путь к файлу системного промпта), `LLM_USER_PROMPT_PATH` (путь к файлу пользовательского промпта), `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`.
 - `BATCH_SIZE`, `MAX_RPS`, `MAX_RPM` — ограничения пайплайна.
 - `CONFIG_PATH`, `MAPPING_PATH` — переопределение путей к YAML-конфига и mapping.

@@ -29,6 +29,7 @@ source_sheet:
   worker_column: ${SOURCE_WORKER_COLUMN}
   in_progress_at_column: ${SOURCE_IN_PROGRESS_AT_COLUMN}
   in_progress_ttl_seconds: ${SOURCE_IN_PROGRESS_TTL_SECONDS}
+  claim_token_column: ${SOURCE_CLAIM_TOKEN_COLUMN}
 
 sink_sheet:
   spreadsheet_id: ${SINK_SPREADSHEET_ID}

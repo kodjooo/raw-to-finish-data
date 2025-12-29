@@ -11,4 +11,5 @@ class SourceRow:
     product_content: str
     category: str
     image_path: Optional[str]
+    claim_token: Optional[str]
     raw_values: Dict[str, Any]

@@ -10,6 +10,7 @@ def _source_row() -> SourceRow:
         product_content="описание",
         category="wine",
         image_path="/img.jpg",
+        claim_token=None,
         raw_values={
             "product_id_hash": "hash123",
             "image_path": "/img.jpg",

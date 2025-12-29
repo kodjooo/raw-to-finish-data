@@ -91,6 +91,7 @@ def _config() -> AppConfig:
             worker_column="worker_id",
             in_progress_at_column="in_progress_at",
             in_progress_ttl_seconds=1800,
+            claim_token_column="claim_token",
         ),
         sink_sheet=SinkSheetSettings(
             spreadsheet_id="sink",
@@ -116,6 +117,7 @@ def test_orchestrator_success_flow() -> None:
         product_content="desc",
         category="wine",
         image_path="img",
+        claim_token=None,
         raw_values={"product_id_hash": "hash123"},
     )
     source = FakeSource(rows=[source_row])
@@ -164,6 +166,7 @@ def test_orchestrator_fails_on_empty_patch() -> None:
         product_content="desc",
         category="wine",
         image_path="img",
+        claim_token=None,
         raw_values={"product_id_hash": "hash000"},
     )
     source = FakeSource(rows=[source_row])
