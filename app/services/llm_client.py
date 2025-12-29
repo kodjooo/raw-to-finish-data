@@ -80,6 +80,17 @@ class LLMClient:
                     max_attempts=self._invalid_json_retries + 1,
                 )
                 continue
+            if not str(data.get("description", "")).strip():
+                last_error = ValueError("LLM ответ не содержит обязательное поле description")
+                if attempt >= self._invalid_json_retries:
+                    raise LLMClientError(str(last_error)) from last_error
+                self._logger.warning(
+                    "LLM вернул ответ без description, повторяем запрос",
+                    product_id=row.product_id,
+                    attempt=attempt + 1,
+                    max_attempts=self._invalid_json_retries + 1,
+                )
+                continue
             data = self._post_process_payload(row, data)
             formatted_raw = json.dumps(data, ensure_ascii=False, indent=2)
             self._logger.info("Ответ LLM получен", product_id=row.product_id)

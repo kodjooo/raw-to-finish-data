@@ -76,6 +76,28 @@ def test_llm_client_stops_after_max_invalid_json(monkeypatch):
         client.infer(_source_row())
 
 
+def test_llm_client_retries_when_description_missing(monkeypatch):
+    texts = iter(['{"name": "Wine"}', '{"description": "Ok"}'])
+    call_counter = {"count": 0}
+
+    def fake_request(self, row):
+        call_counter["count"] += 1
+        return {}
+
+    def fake_extract(self, payload):
+        return next(texts)
+
+    client = LLMClient(_settings(), _runtime())
+    monkeypatch.setattr(client, "_request_with_retry", types.MethodType(fake_request, client))
+    monkeypatch.setattr(client, "_extract_text", types.MethodType(fake_extract, client))
+
+    result = client.infer(_source_row())
+
+    assert isinstance(result, LLMResult)
+    assert result.data["description"] == "Ok"
+    assert call_counter["count"] == 2
+
+
 def test_compose_prompt_contains_names():
     client = LLMClient(_settings(), _runtime())
     prompt = client._compose_prompt(_source_row())
