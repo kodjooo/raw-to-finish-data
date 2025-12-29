@@ -43,6 +43,13 @@ class Orchestrator:
         errors = 0
         for row in rows:
             try:
+                if not self._source.is_claimed_by_me(row.row_index):
+                    self._logger.warning(
+                        "Строка уже обрабатывается другим воркером",
+                        row=row.row_index,
+                        product_id=row.product_id,
+                    )
+                    continue
                 self._rate_limiter.wait()
                 llm_result = self._llm.infer(row)
                 llm_result = self._brand_registry.attach_brand_id(llm_result)

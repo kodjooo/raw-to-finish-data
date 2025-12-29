@@ -74,6 +74,17 @@ class SourceSheetAdapter:
         )
         return pending
 
+    def is_claimed_by_me(self, row_index: int) -> bool:
+        if not self._settings.status_in_progress:
+            return True
+        fresh = self._get_accessor().get_row(row_index)
+        status = str(fresh.get(self._settings.status_column, ""))
+        if status != self._settings.status_in_progress:
+            return False
+        if self._settings.worker_column:
+            return str(fresh.get(self._settings.worker_column, "")).strip() == self._worker_id
+        return True
+
     def mark_error(self, row_index: int, note: str) -> None:
         updates = {
             self._settings.status_column: self._settings.status_error,
