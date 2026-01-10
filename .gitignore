@@ -3,5 +3,6 @@
 .pytest_cache/
 __pycache__/
 .env
+.env-2
 secrets/
 *.pyc

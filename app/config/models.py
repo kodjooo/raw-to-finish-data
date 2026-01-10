@@ -41,6 +41,32 @@ class SourceSheetSettings(BaseModel):
     in_progress_ttl_seconds: Optional[int] = None
     claim_token_column: Optional[str] = None
 
+    @field_validator(
+        "status_in_progress",
+        "processed_at_column",
+        "llm_raw_column",
+        "worker_column",
+        "in_progress_at_column",
+        "claim_token_column",
+        mode="before",
+    )
+    @classmethod
+    def _empty_str_to_none(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("in_progress_ttl_seconds", mode="before")
+    @classmethod
+    def _empty_ttl_to_none(cls, value: Optional[str | int]) -> Optional[int]:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
 
 class SinkMode(str, Enum):
     APPEND = "append"
