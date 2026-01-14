@@ -56,23 +56,22 @@ class BrandRegistry:
 
     def _create_brand(self, brand: str) -> _BrandEntry:
         accessor = self._get_accessor()
-        next_id = self._next_brand_id()
-        payload = {
-            self._settings.id_column: next_id,
-            self._settings.name_column: brand,
-        }
-        accessor.append_row(payload)
-        self._logger.info("Добавлен новый бренд", brand=brand, brand_id=next_id)
-        return _BrandEntry(row_index=-1, brand_id=next_id)
-
-    def _next_brand_id(self) -> str:
-        accessor = self._get_accessor()
-        max_id = 0
-        for _, row_data in accessor.fetch_rows():
+        for row_index, row_data in accessor.fetch_rows():
+            name = str(row_data.get(self._settings.name_column, "")).strip()
+            if name:
+                continue
             brand_id = self._normalize_id(row_data.get(self._settings.id_column, ""))
-            if brand_id and brand_id.isdigit():
-                max_id = max(max_id, int(brand_id))
-        return str(max_id + 1 if max_id else 1)
+            if not brand_id:
+                continue
+            accessor.update_row(row_index, {self._settings.name_column: brand})
+            self._logger.info(
+                "Добавлен бренд в свободный слот",
+                brand=brand,
+                brand_id=brand_id,
+                row=row_index,
+            )
+            return _BrandEntry(row_index=row_index, brand_id=brand_id)
+        raise BrandRegistryError("Не найден свободный слот для бренда с заранее созданным ID")
 
     @staticmethod
     def _normalize_id(value: Any) -> str:
