@@ -97,7 +97,7 @@
   },
   {
     "category_path": "Вино / Крепленое",
-    "category": "Кагор",
+    "category": "Крепленое",
     "category_slug": "kreplenoe"
   },
   {

@@ -4,5 +4,6 @@
 __pycache__/
 .env
 .env-2
+.env-3
 secrets/
 *.pyc
