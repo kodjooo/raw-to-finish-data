@@ -109,4 +109,4 @@ class WorksheetAccessor:
                 payload = {}
         error_payload = payload.get("error", payload) if isinstance(payload, dict) else {}
         code = error_payload.get("code") or status_code
-        return code in (429, 503)
+        return code in (429, 500, 503)

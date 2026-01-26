@@ -20,6 +20,8 @@ class DummyResponse:
 
 def _api_error(code: int) -> APIError:
     status = "UNAVAILABLE" if code == 503 else "RESOURCE_EXHAUSTED"
+    if code == 500:
+        status = "INTERNAL"
     payload = {"error": {"code": code, "message": "temp", "status": status}}
     return APIError(DummyResponse(code, payload))
 
