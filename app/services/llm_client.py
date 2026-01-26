@@ -67,6 +67,19 @@ class LLMClient:
                 product_id=row.product_id,
                 raw=raw_text,
             )
+            html_error = self._detect_html_error(raw_text)
+            if html_error:
+                last_error = ValueError(f"LLM вернул HTML-страницу ошибки {html_error}")
+                if attempt >= self._invalid_json_retries:
+                    raise LLMClientError(str(last_error)) from last_error
+                self._logger.warning(
+                    "LLM вернул HTML-ошибку, повторяем запрос",
+                    product_id=row.product_id,
+                    error=html_error,
+                    attempt=attempt + 1,
+                    max_attempts=self._invalid_json_retries + 1,
+                )
+                continue
             try:
                 data = parse_llm_payload(raw_text, self._logger)
             except ValueError as exc:
@@ -182,6 +195,17 @@ class LLMClient:
                         if isinstance(value, str) and value.strip():
                             return value
         raise LLMClientError("Responses API вернул пустое сообщение")
+
+    @staticmethod
+    def _detect_html_error(raw_text: str) -> str | None:
+        snippet = raw_text.lstrip()[:500].lower()
+        if not (snippet.startswith("<!doctype html") or snippet.startswith("<html")):
+            return None
+        if "error 502" in snippet or "bad gateway" in snippet:
+            return "502"
+        if "error 503" in snippet or "service unavailable" in snippet:
+            return "503"
+        return None
 
     def _reasoning_payload(self) -> Dict[str, Any]:
         effort = self._settings.reasoning_effort
