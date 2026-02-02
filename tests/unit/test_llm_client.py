@@ -24,6 +24,19 @@ def _settings() -> LLMSettings:
     )
 
 
+def test_llm_client_uses_category_profile_prompt(monkeypatch):
+    settings = LLMSettings(
+        api_url="https://example.com",
+        api_key="test-key",
+        model="gpt-5-nano-2025-08-07",
+        reasoning_effort="low",
+        user_prompt_path=Path("config/user_prompt.txt"),
+        category_profile="spirit",
+    )
+    client = LLMClient(settings, _runtime())
+    assert client._system_prompt is not None
+
+
 def _source_row() -> SourceRow:
     return SourceRow(
         row_index=1,

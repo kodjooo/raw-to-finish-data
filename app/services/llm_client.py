@@ -48,7 +48,8 @@ class LLMClient:
         )
         if not hasattr(self._client, "responses"):
             raise ValueError("OpenAI SDK не поддерживает Responses API; обновите пакет openai")
-        self._system_prompt = self._load_system_prompt(settings.system_prompt_path)
+        system_prompt_path = self._resolve_system_prompt_path(settings)
+        self._system_prompt = self._load_system_prompt(system_prompt_path)
         self._user_prompt_template = self._load_user_prompt(settings.user_prompt_path)
 
     def infer(self, row: SourceRow) -> LLMResult:
@@ -242,6 +243,20 @@ class LLMClient:
         if not content:
             raise ValueError("Файл пользовательского промпта пустой")
         return content
+
+    @staticmethod
+    def _resolve_system_prompt_path(settings: LLMSettings) -> Path | None:
+        if settings.system_prompt_path:
+            return settings.system_prompt_path
+        profile = settings.category_profile
+        if not profile:
+            return None
+        mapping = {
+            "wine": Path("config/system_prompt.txt"),
+            "sparkling": Path("config/system_prompt_champagnes.txt"),
+            "spirit": Path("config/system_prompt_spirit.txt"),
+        }
+        return mapping.get(profile)
 
     def __enter__(self) -> "LLMClient":
         return self

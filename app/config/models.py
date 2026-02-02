@@ -87,6 +87,7 @@ class LLMSettings(BaseModel):
     reasoning_effort: Optional[Literal["none", "low", "medium", "high"]] = None
     system_prompt_path: Optional[Path] = None
     user_prompt_path: Optional[Path] = None
+    category_profile: Optional[Literal["wine", "sparkling", "spirit"]] = None
 
     @model_validator(mode="after")
     def _ensure_target(self) -> "LLMSettings":

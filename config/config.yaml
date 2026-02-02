@@ -42,6 +42,7 @@ llm:
   api_key: ${LLM_API_KEY}
   model: ${LLM_MODEL}
   reasoning_effort: ${LLM_REASONING_EFFORT}
+  category_profile: ${LLM_CATEGORY_PROFILE}
   system_prompt_path: ${LLM_SYSTEM_PROMPT_PATH}
   user_prompt_path: ${LLM_USER_PROMPT_PATH}
 
