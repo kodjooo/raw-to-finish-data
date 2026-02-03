@@ -29,7 +29,10 @@ def _walk_and_replace(data: Any, env: Dict[str, str]) -> Any:
         return [_walk_and_replace(item, env) for item in data]
     if isinstance(data, str):
         if "${" in data:
-            return _substitute_env(data, env)
+            substituted = _substitute_env(data, env)
+            if not substituted.strip():
+                return None
+            return substituted
         if not data.strip():
             return None
         return data
