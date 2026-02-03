@@ -61,6 +61,7 @@ class LLMClient:
                 model=self._settings.model,
                 reasoning_effort=self._settings.reasoning_effort or "none",
             )
+            self._log_request_debug(row)
             payload = self._request_with_retry(row)
             raw_text = self._extract_text(payload)
             self._logger.info(
@@ -166,6 +167,18 @@ class LLMClient:
             }
         )
         return messages
+
+    def _log_request_debug(self, row: SourceRow) -> None:
+        system_prompt = self._system_prompt
+        user_prompt = self._compose_prompt(row)
+        self._logger.debug(
+            "LLM request payload",
+            product_id=row.product_id,
+            model=self._settings.model,
+            reasoning_effort=self._settings.reasoning_effort or "none",
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        )
 
     @staticmethod
     def _extract_name(raw_values: Dict[str, Any], key: str) -> str:
