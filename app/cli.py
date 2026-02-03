@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -33,6 +34,11 @@ def _default_mapping_path(path: Optional[Path]) -> Path:
     return Path(env_path)
 
 
+def _resolve_log_level() -> int:
+    level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
+    return getattr(logging, level, logging.INFO)
+
+
 @app.command()
 def validate_config(
     config_path: Optional[Path] = typer.Option(None, help="Путь к config.yaml"),
@@ -40,7 +46,7 @@ def validate_config(
 ) -> None:
     """Проверить, что конфиги корректно собираются."""
 
-    logging_utils.setup_logging()
+    logging_utils.setup_logging(_resolve_log_level())
     logger = logging_utils.get_logger("config")
     resolved_config = _default_config_path(config_path)
     resolved_mapping = _default_mapping_path(mapping_path)
@@ -62,7 +68,7 @@ def run(
 ) -> None:
     """Запуск основного пайплайна обработки одного батча."""
 
-    logging_utils.setup_logging()
+    logging_utils.setup_logging(_resolve_log_level())
     logger = logging_utils.get_logger("bootstrap")
     config = load_app_config(_default_config_path(config_path))
     mapping = load_mapping(_default_mapping_path(mapping_path))
