@@ -208,6 +208,46 @@ def test_section_path_fallback_used_when_primary_missing() -> None:
     assert patch["IE_SECTION_PATH"] == "Вино/Десертное"
 
 
+def test_category_path_used_when_only_category_rules_present() -> None:
+    table = MappingTable(
+        rules=[
+            MappingRule(
+                name="section-path-category",
+                source=MappingSource.JSON,
+                json_path="$.category_path",
+                target_column="IE_SECTION_PATH",
+                transform=["normalize_slash_path"],
+            ),
+            MappingRule(
+                name="section-name-category",
+                source=MappingSource.JSON,
+                json_path="$.category",
+                target_column="ISECT_NAME",
+                transform=["strip"],
+            ),
+            MappingRule(
+                name="section-code-category-slug",
+                source=MappingSource.JSON,
+                json_path="$.category_slug",
+                target_column="ISECT_CODE",
+                transform=["strip"],
+            ),
+        ]
+    )
+    engine = MappingEngine(table)
+    llm_data = {
+        "category_path": "Крепкий алкоголь / Ром",
+        "category": " Ром ",
+        "category_slug": "rom",
+    }
+
+    patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
+
+    assert patch["IE_SECTION_PATH"] == "Крепкий алкоголь/Ром"
+    assert patch["ISECT_NAME"] == "Ром"
+    assert patch["ISECT_CODE"] == "rom"
+
+
 def test_empty_values_are_skipped_without_flag() -> None:
     table = MappingTable(
         rules=[
