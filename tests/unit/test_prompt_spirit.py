@@ -11,5 +11,5 @@ def test_spirit_prompt_example_includes_requested_fields() -> None:
     content = Path("config/system_prompt_spirit.txt").read_text(encoding="utf-8")
     assert "“aging”" in content
     assert "“aging_barrel”" in content
-    assert "“color_depth”" in content
+    assert "“color_shade”" in content
     assert "“whisky_type”" in content

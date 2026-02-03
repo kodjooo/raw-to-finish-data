@@ -197,6 +197,11 @@
   json_path: $.vintage_year
   target_column: Год урожая [GOD_UROZHAYA] {IP_PROP1022}
 
+- name: aging_barrel
+  source: json
+  json_path: $.aging_barrel
+  target_column: Выдержка в ёмкости [VYDERZHKA_V_YEMKOSTI] {IP_PROP1062}
+
 - name: color
   source: json
   json_path: $.color
@@ -261,6 +266,16 @@
   source: json
   json_path: $.aging
   target_column: Выдержка [VYDERZHKA] {IP_PROP1019}
+
+- name: color_shade
+  source: json
+  json_path: $.color_shade
+  target_column: Оттенок [OTTENOK_1] {IP_PROP1070}
+
+- name: whisky_type
+  source: json
+  json_path: $.whisky_type
+  target_column: Тип виски [TIP_VISKI] {IP_PROP1054}
 
 - name: production-method
   source: json
