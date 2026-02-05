@@ -59,5 +59,5 @@ docker compose run --rm processor pytest
    ```bash
    docker compose up -d processor --build
    ```
-   Логи доступны через `docker compose logs -f processor`. Обновление до новой версии: `git pull`, затем `docker compose build processor && docker compose up -d --force-recreate processor`.
+   Логи доступны через `docker compose logs -f processor`. Дополнительно можно писать в файл, указав `LOG_FILE_PATH=./logs/processor.log` (смонтировано в `docker-compose.yml`, файл появится в `./logs` на хосте). Обновление до новой версии: `git pull`, затем `docker compose build processor && docker compose up -d --force-recreate processor`.
 6. Для ручного запуска одного батча используйте `docker compose run --rm processor python -m app.main run`.

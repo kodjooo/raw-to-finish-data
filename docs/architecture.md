@@ -47,7 +47,7 @@
    - Контейнеризация: Docker Desktop, одиночный сервис `processor` в `docker-compose.yml`; запуск `docker compose up processor` или `docker run --env-file .env raw-to-finished-data`.
 
 5. Логирование и мониторинг
-   - Все модули пишут структурированные логи (JSON или key=value) в stdout, Docker Desktop собирает их.
+   - Все модули пишут структурированные логи (JSON или key=value) в stdout, Docker Desktop собирает их. Дополнительно можно включить запись в файл через `LOG_FILE_PATH` (по умолчанию `./logs/processor.log`, volume смонтирован в docker-compose.yml).
    - Ключевые события: старт батча, количество успешных/ошибочных строк, ошибки LLM, ошибки записи в приёмник.
    - Для отладки сохраняем llm_raw (опционально) либо в отдельную колонку источника, либо в metadata под ключом `llm_raw`.
 

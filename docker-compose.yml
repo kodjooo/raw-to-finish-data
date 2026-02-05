@@ -8,5 +8,6 @@ services:
       - .env
     volumes:
       - ./secrets:/app/secrets:ro
+      - ./logs:/app/logs
     command: ["python", "-m", "app.main", "run"]
     restart: unless-stopped

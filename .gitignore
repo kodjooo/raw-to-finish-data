@@ -7,3 +7,4 @@ __pycache__/
 .env-3
 secrets/
 *.pyc
+logs/*.log
