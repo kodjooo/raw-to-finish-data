@@ -15,6 +15,11 @@ def test_spirit_prompt_example_includes_requested_fields() -> None:
     assert "“whisky_type”" in content
 
 
+def test_spirit_prompt_whisky_type_only_for_whisky() -> None:
+    content = Path("config/system_prompt_spirit.txt").read_text(encoding="utf-8")
+    assert 'Тип виски (генерируется ТОЛЬКО если тип напитка — "Виски"' in content
+
+
 def test_spirit_prompt_classifier_rules_for_spirits() -> None:
     content = Path("config/system_prompt_spirit.txt").read_text(encoding="utf-8")
     assert "Коньяк/Арманьяк/Бренди/Кальвадос" in content
