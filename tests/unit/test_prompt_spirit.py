@@ -30,3 +30,4 @@ def test_spirit_prompt_classifier_rules_for_spirits() -> None:
     assert "НАПОЛЕОН → Napoleon" in content
     assert "ВИНТАЖ → Vintage" in content
     assert "АС → AC" in content
+    assert "НИКАКОГО перевода/латинизации не делать" in content
