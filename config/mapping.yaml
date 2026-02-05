@@ -134,7 +134,7 @@
 
 - name: storage_capacity
   source: json
-  json_path: $.storage capacity
+  json_path: $.storage_capacity
   target_column: Потенциал хранения [POTENTSIAL_KHRANENIYA] {IP_PROP1071}
 
 - name: grapes

@@ -273,3 +273,24 @@ def test_empty_values_are_skipped_without_flag() -> None:
 
     assert "IE_NAME" not in patch
     assert patch["NOTE"] == ""
+
+
+def test_invalid_json_path_raises_error() -> None:
+    table = MappingTable(
+        rules=[
+            MappingRule(
+                name="invalid-path",
+                source=MappingSource.JSON,
+                json_path="name",
+                target_column="IE_NAME",
+            ),
+        ]
+    )
+    engine = MappingEngine(table)
+
+    try:
+        engine.build_patch(llm_data={"name": "Test"}, source_row=_source_row())
+    except ValueError as exc:
+        assert "json_path должен начинаться" in str(exc)
+    else:
+        raise AssertionError("Ожидалась ошибка валидации json_path")

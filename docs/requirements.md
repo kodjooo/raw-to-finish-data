@@ -16,7 +16,7 @@
   • есть правило в mapping
   И
   • у агента реально пришло непустое значение;
-- прокидывает image_path из источника в приёмник без изменений;
+- прокидывает image_path из источника в приёмник через transform (по умолчанию добавляет префикс `/images/`, если путь не пустой);
 - после успешной записи в приёмник меняет статус строки в источнике на «Обработано», при ошибке — «Ошибка» и пишет текст ошибки в note.
 
 
@@ -56,20 +56,22 @@
 ID элемента {IE_ID}
 Внешний код {IE_XML_ID}
 Ссылка у конкурента {IE_LINK_RIVAL} — заполняем из `product_url`
+Источник {IE_LINK_RIVAL} — заполняем из `source_site` (если колонка присутствует в приёмнике и есть правило в mapping)
 Наименование у конкурента (en) {IE_NAME_RIVAL_EN} — заполняем из колонки источника `name (en)`
 Наименование у конкурента (ru) {IE_NAME_RIVAL_RU} — заполняем из колонки источника `name (ru)`
 Наименование элемента {IE_NAME}
+Наименование элемента (minor) {IE_NAME_MINOR} — заполняем из `name_minor` при наличии в ответе
 Артикул [CML2_ARTICLE] {IP_PROP1001}
 Детальная картинка (путь) {IE_DETAIL_PICTURE}
 Картинки галереи [MORE_PHOTO] {IP_PROP1006} — оставляем пустым
 Детальное описание {IE_DETAIL_TEXT}
 Тип детального описания {IE_DETAIL_TEXT_TYPE}
 Путь из названий разделов {IE_SECTION_PATH}
-Название раздела {ISECT_NAME} — заполняем значением `category` (fallback к section_path)
+Название раздела {ISECT_NAME} — заполняем значением `category`
 Символьный код {ISECT_CODE} — заполняем значением `category_slug`
 Внешний код {ISECT_XML_ID} — не заполняем
-Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT} — заполняем из колонки источника `price (without discount)`
-Цена "Цена" {ICAT_PRICE5_PRICE} — заполняем из колонки источника `price (with discount)`
+Старая цена {ICAT_PRICE_WITHOUT_DISCOUNT} — в текущем mapping не заполняем
+Цена "Цена" {ICAT_PRICE5_PRICE} — заполняем из колонки источника `price (with discount)` с нормализацией и выбором максимума с `price (without discount)`
 Цена "Цена Сайт Белгород" {ICAT_PRICE6_PRICE}
 Цена "Розничная цена Краснодар" {ICAT_PRICE4_PRICE}
 Цена "Розничная цена (Орел)" {ICAT_PRICE3_PRICE}
@@ -85,6 +87,7 @@ ID элемента {IE_ID}
 Аппелласьон [APPELLASON] {IP_PROP1010}
 Выдержка в ёмкости [VYDERZHKA_V_YEMKOSTI] {IP_PROP1062}
 Бренд [BREND] {IP_PROP1012}
+Бренд [BRANDS] {IP_PROP1121} — заполняем `brand_id`, если включён бренд-реестр
 Глубина цвета [GLUBINA_TSVETA] {IP_PROP1063}
 Объем [OBEM] {IP_PROP1035}
 Крепость [KREPOST] {IP_PROP1120}
@@ -135,18 +138,24 @@ ID элемента {IE_ID}
 
 ИИ возвращает строго JSON-объект. Структура задаётся промптом, но пример для алкоголя может быть таким:
 
-Минимальный набор ключей, которые должны присутствовать в ответе (допускаются дополнительные поля, но перечисленные нельзя опускать — при отсутствии значения ставим null, однако формат сохраняем):
-- `name`, `brand`, `country`, `region`.
-- `grape_varieties` — массив строк (каждый сорт отдельным элементом).
-- `sugar`, `volume`, `abv`, `vintage`, `aroma`, `taste`, `classification`.
-- `description_html` — HTML с параграфами `<p>...</p>`.
-- `category_path` — строка вида `Категория/Подкатегория` без пробелов вокруг `/` (строка хранится целиком, без разбиения по другим колонкам).
-- `category` — название раздела (мэппится в `ISECT_NAME`).
+Допускается «обёртка» верхнего уровня с ключами `products`/`items`/`data`/`product`/`payload`/`result`/`output` (или список объектов). В этом случае пайплайн извлекает первый подходящий объект с данными товара.
+
+Пустые значения и `null` в ответе нежелательны: такие поля игнорируются, а при отсутствии `description` запрос считается ошибочным.
+
+Обязательный минимум в текущей реализации:
+- `description` — текстовое описание (plain text), без HTML; при отсутствии этого поля пайплайн повторяет запрос и в итоге падает с ошибкой.
+
+Остальные поля опциональны и приходят только если есть данные:
+- `name`, `name_main`, `name_minor`, `brand`, `producer`, `country`, `region`;
+- `grape_varieties` — массив строк или строка (будет нормализован);
+- `sugar`, `volume`, `volume_l`, `abv`, `alcohol_percent`, `vintage`, `vintage_year`, `aroma`, `taste`, `classification`, `classifier`;
+- `description_html` — HTML с параграфами `<p>...</p>` (если есть, он приоритетнее `description`);
+- `category_path` — строка вида `Категория/Подкатегория` без пробелов вокруг `/` (строка хранится целиком, без разбиения по другим колонкам);
+- `category` — название раздела (мэппится в `ISECT_NAME`);
 - `category_slug` — slug для `category` (мэппится в `ISECT_CODE`).
-- `prices` → `retail` — число (или строка) с точкой в качестве разделителя дробной части.
 Для `volume` используем литры в формате строки с точкой (например `0.75`), для `abv` — только цифры и точку без знака `%`, `vintage` — четыре цифры.
 Все текстовые значения обязаны быть валидными для JSON: не оставляем неэкранированные двойные кавычки внутри строк (либо заменяем их на «ёлочки», либо экранируем символом `\"`), переносы строк задаём через `\n`.
-Поля `category`, `category_path`, `category_slug` в JSON не используем; вся информация о разделе должна быть выражена только через `section_*`.
+Поля `section_path`/`section_name`/`section_code` в текущей реализации не используются и игнорируются; для разделов используется только `category_path`/`category`/`category_slug`.
 
 Дополнительно агент может (и желательно, чтобы делал) присылать вспомогательные ключи:
 - `description` — fallback-текст, если по каким-то причинам не удалось отрендерить `description_html`. Мы всё равно заполним колонку IE_DETAIL_TEXT, но при наличии `description_html` он имеет приоритет.
@@ -158,7 +167,7 @@ ID элемента {IE_ID}
 - Дополнительные свойства, которые агент может отправить в JSON и которые мы сохраняем напрямую в Bitrix: `appellation` (→ IP_PROP1010), `aging` (→ IP_PROP1019), `production_method` (→ IP_PROP1073), `acidity` (→ IP_PROP1066), `body` (→ IP_PROP1076), `technical_features` (→ IP_PROP1079), `terroir` (→ IP_PROP1078). Поле `serving_temperature` — синоним `temperature_serving`.
 - `vivino_score` — числовая или строковая оценка Vivino, которую кладём в колонку «Оценка Vivino {VIVINO_SCORE}» после простого приведения к строке/обрезки пробелов.
 - Колонки источника (`product_url`, `name (en)`, `name (ru)`, `price (without discount)`, `price (with discount)`) сразу перекладываются в соответствующие поля приёмника (IE_LINK_RIVAL, IE_NAME_RIVAL_EN, IE_NAME_RIVAL_RU, ICAT_PRICE_WITHOUT_DISCOUNT, ICAT_PRICE5_PRICE) после нормализации значений (обрезаем пробелы, удаляем текст вроде `руб`, оставляем только цифры/знаки, приводим цены к числу).
-  Цены дополнительно форматируются в строку вида `2994.00` (две десятичные, разделитель — точка).
+  Цены дополнительно форматируются в строку вида `2994.00` (две десятичные, разделитель — точка) и для `ICAT_PRICE5_PRICE` берётся максимум из двух цен.
 
 {
   "name": "Шампанское Brut Rose",
@@ -174,9 +183,11 @@ ID элемента {IE_ID}
   "taste": "Свежий, ягодный, с хорошей кислотностью",
   "color": "Розовый",
   "classification": "AOC",
+  "description": "Подробное описание…",
   "description_html": "<p>Подробное описание…</p>",
-  "section_path": "Вино/Игристое/Франция/Шампань",
-  "section_name": "Шампанское"
+  "category_path": "Вино/Игристое/Франция/Шампань",
+  "category": "Шампанское",
+  "category_slug": "shampanskoe"
 }
 
 Точный контракт (какие поля могут прийти) фиксируется в отдельном описании схемы, но скрипт должен быть готов к следующему:
@@ -196,7 +207,7 @@ Mapping хранится в отдельном файле (например, map
   • source: "source_row" — из строки источника (например, image_path → IE_DETAIL_PICTURE);
   • source: "const" — фиксированное значение (например, IE_DETAIL_TEXT_TYPE = "text").
 - путь к полю:
-  • для json — json_path в формате dot-notation или JSONPath;
+  • для json — json_path в формате `$.key.subkey` с опциональным индексом `$.items[0].name` (любой другой синтаксис не поддерживается);
   • для source_row — название колонки источника;
 - target_column — название колонки приёмника (из списка выше);
 - опционально transform — список преобразований (strip, number и т.п.);
@@ -232,8 +243,9 @@ Mapping хранится в отдельном файле (например, map
   { "source": "json", "json_path": "$.classification", "target_column": "IP_PROP1029" },        // Классификация
   { "source": "json", "json_path": "$.description_html", "target_column": "IE_DETAIL_TEXT" },
   { "source": "const", "const_value": "text", "target_column": "IE_DETAIL_TEXT_TYPE" },
-  { "source": "json", "json_path": "$.section_path", "target_column": "IE_SECTION_PATH" },
-  { "source": "json", "json_path": "$.section_name", "target_column": "ISECT_NAME" }
+  { "source": "json", "json_path": "$.category_path", "target_column": "IE_SECTION_PATH" },
+  { "source": "json", "json_path": "$.category", "target_column": "ISECT_NAME" },
+  { "source": "json", "json_path": "$.category_slug", "target_column": "ISECT_CODE" }
 ]
 
 Логика обработки mapping:
@@ -250,14 +262,15 @@ Mapping хранится в отдельном файле (например, map
 В запрос к GPT скрипт обязательно добавляет:
 
 - content = product_content;
-- category из поля category источника.
+- category из поля category источника;
+- name (en) и name (ru) из источника (если пусто — подставляется "не указано" в шаблоне промпта).
 
-Дополнительно можно (по желанию) передавать source_site, product_url и т.п., но это опционально.
+Дополнительные поля (source_site, product_url и т.п.) в текущей реализации в LLM не отправляются.
 
 image_path в GPT не отправляется. Он берётся только из источника и используется при формировании строки приёмника:
 
 - через правило mapping: source_row.image_path → IE_DETAIL_PICTURE (IP_PROP1006 не используем и оставляем пустым).
-- значение не меняется: никаких скачиваний файлов, перезаливок и т.д.
+- значение нормализуется transform-правилом `prepend_images_path` (по умолчанию добавляется префикс `/images/`), без скачиваний файлов и перезаливок.
 - показатели `stocks.store_*` из ответа ИИ игнорируем — все колонки количества на складах оставляем пустыми.
 
 
@@ -270,7 +283,7 @@ image_path в GPT не отправляется. Он берётся тольк�
   • status_column, status_new, status_done, status_error;
   • content_column = "product_content";
   • category_column = "category";
-  • image_path_column = "image_path";
+  • image_column = "image_path";
   • id_column = "product_id_hash";
   • note_column = "note";
 - ID и лист приёмника (битриксовый шаблон);
@@ -278,8 +291,8 @@ image_path в GPT не отправляется. Он берётся тольк�
 - параметры ИИ-агента (URL, модель, ключ, таймаут, retries);
 - размер батча за один запуск, лимиты RPS/RPM;
 - режим записи в приёмник:
-  • sink_mode: "append" — всегда добавляем новую строку;
-  • sink_mode: "upsert_by_xml_id" — ищем по IE_XML_ID = product_id_hash и обновляем только те колонки, для которых пришло значение.
+  • mode: "append" — всегда добавляем новую строку;
+  • mode: "upsert_by_xml_id" — ищем по IE_XML_ID = product_id_hash и обновляем только те колонки, для которых пришло значение.
 
 При upsert обновление происходит «патчем» по колонкам, а не перезаписью всей строки, чтобы не трогать цены/остатки и другие поля, не связанные с GPT.
 

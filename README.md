@@ -1,6 +1,6 @@
 # raw-to-finished-data
 
-raw-to-finished-data — сервис автоматической постобработки карточек каталога. Он забирает строки из Google Sheet A (источник), отправляет `product_content` и `category` в LLM (Responses API), валидирует ответ JSON, сопоставляет поля с битриксовым шаблоном по `config/mapping.yaml` и обновляет Google Sheet B. Проект изначально задуман как контейнеризированный (Docker Desktop локально, Docker Engine на сервере) и управляется через CLI `python -m app.main run`.
+raw-to-finished-data — сервис автоматической постобработки карточек каталога. Он забирает строки из Google Sheet A (источник), отправляет `product_content` и `category` в LLM (Responses API), валидирует ответ JSON (обязательно наличие `description`), сопоставляет поля с битриксовым шаблоном по `config/mapping.yaml` и обновляет Google Sheet B. Для разделов используются поля `category_path`/`category`/`category_slug`, а `section_*` игнорируются. Путь `image_path` при записи нормализуется transform-правилом `prepend_images_path` (по умолчанию добавляется префикс `/images/`). Проект изначально задуман как контейнеризированный (Docker Desktop локально, Docker Engine на сервере) и управляется через CLI `python -m app.main run`.
 
 ## Быстрый старт (Docker Desktop)
 
