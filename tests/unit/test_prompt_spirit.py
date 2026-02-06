@@ -15,6 +15,13 @@ def test_spirit_prompt_example_includes_requested_fields() -> None:
     assert "“whisky_type”" in content
 
 
+def test_spirit_prompt_uses_aging_in_names_not_year() -> None:
+    content = Path("config/system_prompt_spirit.txt").read_text(encoding="utf-8")
+    assert "{Выдержка}" in content
+    assert "{Год}" not in content
+    assert "12 Years Old, 0.7 л (п/у)" not in content
+
+
 def test_spirit_prompt_whisky_type_only_for_whisky() -> None:
     content = Path("config/system_prompt_spirit.txt").read_text(encoding="utf-8")
     assert 'Тип виски (генерируется ТОЛЬКО если тип напитка — "Виски"' in content
