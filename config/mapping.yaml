@@ -131,6 +131,9 @@
   target_column: Глубина цвета [GLUBINA_TSVETA] {IP_PROP1063}
   transform:
     - strip
+    - capitalize_first
+  transform:
+    - strip
 
 - name: storage_capacity
   source: json
@@ -241,6 +244,9 @@
   source: json
   json_path: $.body
   target_column: Тело / Насыщенность [TELO_NASYSHCHENNOST] {IP_PROP1076}
+  transform:
+    - strip
+    - capitalize_first
 
 - name: temperature-serving
   source: json

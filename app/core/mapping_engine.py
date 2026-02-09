@@ -82,6 +82,9 @@ class MappingEngine:
                 result = result.lower() if isinstance(result, str) else result
             elif transform == "upper":
                 result = result.upper() if isinstance(result, str) else result
+            elif transform == "capitalize_first":
+                if isinstance(result, str) and result:
+                    result = result[:1].upper() + result[1:]
             elif transform.startswith("join(") and transform.endswith(")"):
                 if isinstance(result, (list, tuple)):
                     separator = transform[5:-1]

@@ -272,6 +272,34 @@ def test_empty_values_are_skipped_without_flag() -> None:
     patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
 
     assert "IE_NAME" not in patch
+
+
+def test_capitalize_first_transform_for_color_depth_and_body() -> None:
+    table = MappingTable(
+        rules=[
+            MappingRule(
+                name="color_depth",
+                source=MappingSource.JSON,
+                json_path="$.color_depth",
+                target_column="GLUBINA_TSVETA",
+                transform=["strip", "capitalize_first"],
+            ),
+            MappingRule(
+                name="body",
+                source=MappingSource.JSON,
+                json_path="$.body",
+                target_column="TELO_NASYSHCHENNOST",
+                transform=["strip", "capitalize_first"],
+            ),
+        ]
+    )
+    engine = MappingEngine(table)
+    llm_data = {"color_depth": "светлое", "body": "лёгкое"}
+
+    patch = engine.build_patch(llm_data=llm_data, source_row=_source_row())
+
+    assert patch["GLUBINA_TSVETA"] == "Светлое"
+    assert patch["TELO_NASYSHCHENNOST"] == "Лёгкое"
     assert patch["NOTE"] == ""
 
 
