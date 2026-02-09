@@ -47,7 +47,7 @@ class LLMProductSchema(BaseModel):
             return ", ".join(str(item) for item in value if item)
         return value
 
-    @field_validator("vintage", "volume", "abv", mode="before")
+    @field_validator("vintage", "volume", "abv", "vivino_score", mode="before")
     @classmethod
     def _convert_numeric_fields(cls, value: Any) -> Any:
         if isinstance(value, (int, float)):

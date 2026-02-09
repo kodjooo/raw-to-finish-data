@@ -30,3 +30,10 @@ def test_parse_llm_payload_normalizes_grape_varieties():
     raw = '{"grape_varieties": "Cabernet Sauvignon, Merlot "}'
     result = parse_llm_payload(raw, logger)
     assert result["grape_varieties"] == "Cabernet Sauvignon, Merlot"
+
+
+def test_parse_llm_payload_converts_numeric_vivino_score():
+    logger = logging_utils.get_logger("test")
+    raw = '{"name": "Wine", "vivino_score": 3.7}'
+    result = parse_llm_payload(raw, logger)
+    assert result["vivino_score"] == "3.7"
